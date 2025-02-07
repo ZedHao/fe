@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <router-link to="/stock/:symbol">可转债</router-link>
+    <router-link to="/stock/:symbol">大绿黄可转债</router-link>
 
   </nav>
   <router-view/>
