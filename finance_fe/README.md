@@ -1,9 +1,16 @@
 # finance
 ````
+/bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
 
- nvm use  v22.9.0 
-npm install chromedriver --chromedriver_cdnurl=http://cdn.npm.taobao.org/dist/chromedriver
+nvm use  v22.9.0 
+npm cache verify
+npm install --verbose  --legacy-peer-deps
+npm cache clean --force
+npm install  --legacy-peer-deps
+https://registry.npmjs.org
+registry=https://registry.npmmirror.com
 
+npm config list
 ````
 ## Project setup
 ```
