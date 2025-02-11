@@ -2,7 +2,6 @@
 
 import baostock as bs
 import pandas as pd
-import tushare as ts
 # https://aniudata.com/#/bond/factorList
 # https://www.haoetf.com/lof/161226
 def getStock():
@@ -42,11 +41,6 @@ def getStock():
     # 登出系统
     bs.logout()
 
-def getTushare():
-    pro = ts.pro_api('48180c18f46a374aea35efcf1aca94569f8164ddf938b9c301f24a99')
-
-    df = pro.daily(ts_code='002594.SZ', start_date='20250115', end_date='20250207')
-    print(df)
 
 #多个股票
 def get_id_by_name(code:str):
@@ -71,7 +65,7 @@ def get_id_by_name(code:str):
     bs.logout()
     return
 
-def getBaoStockData(stock_name: str, stock_id: str, start_date: str, end_date: str) -> Union[pd.DataFrame, None]:
+def get_bao_stock_data(stock_name: str, stock_id: str, start_date: str, end_date: str) -> Union[pd.DataFrame, None]:
     if stock_name.find('.') == -1 :
        stock_id = get_id_by_name(stock_name)
      else:
