@@ -2,14 +2,17 @@
   <header class="header">
     <div class="logo">
       <img src="../assets/logo.png" alt="Logo" class="logo-img" />
-      <span class="site-name">大绿黄财经科技</span>
+      <span class="site-name">大蓝黄财经科技</span>
     </div>
     <nav class="nav">
       <ul class="nav-list">
         <li class="nav-item"><a href="#" class="nav-link">黄金</a></li>
+
         <li class="nav-item"><a href="#" class="nav-link">基金</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">股票</a></li>
         <li class="nav-item"><a href="#" class="nav-link">可转债</a></li>
+        <li class="nav-item">
+          <router-link to="/stock" class="nav-link">股票</router-link>
+        </li>
         <li class="nav-item"><a href="#" class="nav-link">关于我们</a></li>
       </ul>
     </nav>

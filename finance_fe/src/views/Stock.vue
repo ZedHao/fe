@@ -8,16 +8,30 @@
         placeholder="输入股票名称或代码"
         class="search-input"
       />
-      <input
-        v-model="startDate"
-        type="date"
-        class="date-input"
-      />
-      <input
-        v-model="endDate"
-        type="date"
-        class="date-input"
-      />
+      <div>
+        <span @click="showStartDatePicker = true">开始时间：{{ startDate }}</span>
+        <div v-show="showStartDatePicker" class="date-picker-popup">
+          <input
+            v-model="startDate"
+            type="date"
+            class="date-input"
+          />
+          <button @click="showStartDatePicker = false">确定</button>
+          <button @click="cancelDateSelection('start')">取消</button>
+        </div>
+      </div>
+      <div>
+        <span @click="showEndDatePicker = true">结束时间：{{ endDate }}</span>
+        <div v-show="showEndDatePicker" class="date-picker-popup">
+          <input
+            v-model="endDate"
+            type="date"
+            class="date-input"
+          />
+          <button @click="showEndDatePicker = false">确定</button>
+          <button @click="cancelDateSelection('end')">取消</button>
+        </div>
+      </div>
       <button @click="searchStocks" class="search-button">搜索</button>
     </div>
     <div class="table-section">
@@ -60,9 +74,12 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import Header from '@/components/Header.vue';
+import { mockStockData } from '@/mock/mock.';
 
 // 定义响应式数据
 const searchQuery = ref('');
+const showStartDatePicker = ref(false);
+const showEndDatePicker = ref(false);
 const startDate = ref(getDefaultStartDate());
 const endDate = ref(getDefaultEndDate());
 const stockData = ref([]);
@@ -79,20 +96,33 @@ function getDefaultEndDate() {
   return new Date().toISOString().split('T')[0];
 }
 
+// 取消日期选择
+function cancelDateSelection(type: 'start' | 'end') {
+  if (type === 'start') {
+    startDate.value = getDefaultStartDate();
+    showStartDatePicker.value = false;
+  } else {
+    endDate.value = getDefaultEndDate();
+    showEndDatePicker.value = false;
+  }
+}
+
 // 搜索股票数据的方法
 async function searchStocks() {
   try {
+    const params: { query: string; startDate: string; endDate: string } = {
+      query: searchQuery.value,
+      startDate: startDate.value,
+      endDate: endDate.value
+    };
+
     const response = await axios.get('/api/stock-data', {
-      params: {
-        query: searchQuery.value,
-        startDate: startDate.value,
-        endDate: endDate.value,
-      },
+      params
     });
-    stockData.value = response.data;
+    stockData.value = mockStockData;
   } catch (error) {
     console.error('搜索失败:', error);
-    stockData.value = [];
+    stockData.value = mockStockData;
   }
 }
 </script>
@@ -109,6 +139,8 @@ async function searchStocks() {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .search-input,
@@ -164,5 +196,19 @@ async function searchStocks() {
 .no-data {
   text-align: center;
   color: #ccc;
+}
+
+.date-picker-popup {
+  position: absolute;
+  background-color: #1a1a1a;
+  padding: 10px;
+  border: 1px solid #444;
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.date-picker-popup button {
+  margin-top: 10px;
+  margin-right: 5px;
 }
 </style>
