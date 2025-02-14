@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9i-68y0+tvi0h+-pxwk4(h(mia9gvhzxv4qyeae%-nj8zydfbk'
+SECRET_KEY = 'django-insecure--7ptb2t4flih!8pg*a_0nk8(-b^at20^n69hg*t$m!wdwgl&r3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'finance_server',
+    'corsheaders',
+
 ]
 
 MIDDLEWARE = [
@@ -47,6 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'finance_server.urls'
@@ -69,6 +74,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'finance_server.wsgi.application'
 
+CORS_ALLOW_ALL_ORIGINS = True  # 允许所有来源的跨域请求，生产环境中建议配置具体的来源
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

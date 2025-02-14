@@ -1,14 +1,12 @@
-
-
 import baostock as bs
 import pandas as pd
+import pdb
 # https://aniudata.com/#/bond/factorList
 # https://www.haoetf.com/lof/161226
+lg = bs.login()
 def getStock():
 
-    # 登陆系统
-    lg = bs.login()
-
+    # 登陆系
     # 获取指数(综合指数、规模指数、一级行业指数、二级行业指数、策略指数、成长指数、价值指数、主题指数)K线数据
     # 综合指数，例如：sh.000001 上证指数，sz.399106 深证综指 等；
     # 规模指数，例如：sh.000016 上证50，sh.000300 沪深300，sh.000905 中证500，sz.399001 深证成指等；
@@ -43,15 +41,17 @@ def getStock():
 
 
 #多个股票
-def get_id_by_name(code:str):
+def get_id_by_name(stock_code:str,stock_id:str):
     # 登陆系统
-    lg = bs.login()
+
     # 显示登陆返回信息
-    print('login respond error_code:'+lg.error_code)
-    print('login respond  error_msg:'+lg.error_msg)
 
     # 获取证券基本资料
-    rs = bs.query_stock_basic(code="sz.399376")
+    if stock_code !="":
+        rs = bs.query_stock_basic(code_name=stock_code)
+    else:
+        rs = bs.query_stock_basic(code=stock_id)
+
     # rs = bs.query_stock_basic(code_name="浦发银行")  # 支持模糊查询
     # 打印结果集
     data_list = []
@@ -60,37 +60,40 @@ def get_id_by_name(code:str):
         data_list.append(rs.get_row_data())
     # 结果集输出到csv文件
     result = pd.DataFrame(data_list, columns=rs.fields)
-    print(result)
     # 登出系统
-    bs.logout()
-    return
+    return result
 
-def get_bao_stock_data(stock_name: str, stock_id: str, start_date: str, end_date: str) -> Union[pd.DataFrame, None]:
+def get_bao_stock_data(stock_name: str, start_date: str, end_date: str) :
     if stock_name.find('.') == -1 :
-       stock_id = get_id_by_name(stock_name)
-     else:
-         stock_id = stock_name
-    lg = bs.login()
-    # 显示登陆返回信息
+        stock_info = get_id_by_name(stock_name,"")
+    else:
+        stock_info = get_id_by_name("",stock_name)
+    if len(stock_info.code)==0:
+        raise ValueError("该股票没查到")
+    stock_id = stock_info.code[0]
+    stock_name = stock_info.code_name[0]
 
-    #### 获取沪深A股历史K线数据 ####
-    # 详细指标参数，参见“历史行情指标参数”章节；“分钟线”参数与“日线”参数不同。“分钟线”不包含指数。
-    # 分钟线指标：date,time,code,open,high,low,close,volume,amount,adjustflag
-    # 周月线指标：date,code,open,high,low,close,volume,amount,adjustflag,turn,pctChg
-    rs = bs.query_history_k_data_plus(stockID,
+    if stock_id == "":
+        raise ValueError("stock_id不能为零")
+
+    rs = bs.query_history_k_data_plus(stock_id,
                                       "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST",
-                                      start_date=start_date, end_date=start_date,
+                                      start_date=start_date, end_date=end_date,
                                       frequency="d", adjustflag="3")
+
     #### 打印结果集 ####
     data_list = []
+
+
     while (rs.error_code == '0') & rs.next():
         # 获取一条记录，将记录合并在一起
-        data_list.append(rs.get_row_data())
-    result = pd.DataFrame(data_list, columns=rs.fields)
-
+        row_data = rs.get_row_data()
+        # 在每一行数据中添加 stock_id
+        row_data.append(stock_name)
+        # 将添加了 stock_id 的行数据添加到 data_list 中
+        data_list.append(row_data)
+    new_fields = rs.fields + ['stock_name']
+    result = pd.DataFrame(data_list, columns=new_fields)
     #### 结果集输出到csv文件 ####
-    print(result)
-
     #### 登出系统 ####
-    bs.logout()
-    return
+    return result

@@ -3,7 +3,7 @@
     <Header />
     <div class="search-section">
       <input
-        v-model="searchQuery"
+        v-model="stockCode"
         type="text"
         placeholder="输入股票名称或代码"
         class="search-input"
@@ -39,7 +39,8 @@
         <thead>
         <tr>
           <th>日期</th>
-          <th>代码</th>
+          <th>股票</th>
+          <th>股票代码</th>
           <th>开盘价</th>
           <th>最高价</th>
           <th>最低价</th>
@@ -53,6 +54,7 @@
         <tbody>
         <tr v-for="(item, index) in stockData" :key="index">
           <td>{{ item.date }}</td>
+          <td>{{ item.stock_name}}</td>
           <td>{{ item.code }}</td>
           <td>{{ item.open }}</td>
           <td>{{ item.high }}</td>
@@ -72,12 +74,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
 import Header from '@/components/Header.vue';
-import { mockStockData } from '@/mock/mock.';
+import {getStockData} from '../services/stockApi';
 
 // 定义响应式数据
-const searchQuery = ref('');
+const stockCode = ref('');
 const showStartDatePicker = ref(false);
 const showEndDatePicker = ref(false);
 const startDate = ref(getDefaultStartDate());
@@ -110,19 +111,12 @@ function cancelDateSelection(type: 'start' | 'end') {
 // 搜索股票数据的方法
 async function searchStocks() {
   try {
-    const params: { query: string; startDate: string; endDate: string } = {
-      query: searchQuery.value,
-      startDate: startDate.value,
-      endDate: endDate.value
-    };
+    console.log(typeof getStockData); // 检查类型
 
-    const response = await axios.get('/api/stock-data', {
-      params
-    });
-    stockData.value = mockStockData;
+    const response = await getStockData(stockCode.value,startDate.value,endDate.value)
+    stockData.value = response;
   } catch (error) {
     console.error('搜索失败:', error);
-    stockData.value = mockStockData;
   }
 }
 </script>

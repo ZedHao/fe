@@ -16,9 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from finance_server import service
+from service import  stock
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('admin/',service.),
-
+    path('get_stock/', stock.get_stock_data, name='get_stock_data'),
 ]
