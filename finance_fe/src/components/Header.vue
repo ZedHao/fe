@@ -9,7 +9,10 @@
         <li class="nav-item"><a href="#" class="nav-link">黄金</a></li>
 
         <li class="nav-item"><a href="#" class="nav-link">基金</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">可转债</a></li>
+        <li class="nav-item">
+          <router-link to="/convert_bond" class="nav-link">可转债</router-link>
+        </li>
+
         <li class="nav-item">
           <router-link to="/stock" class="nav-link">股票</router-link>
         </li>

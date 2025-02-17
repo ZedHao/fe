@@ -8,7 +8,7 @@ import logging
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-from dao  import  stock
+from dao  import  stock,convert_bond
 from django.http import JsonResponse
 
 def get_stock_data(request):
@@ -33,3 +33,21 @@ def get_stock_data(request):
    resp = JsonResponse(response_data, safe=False)
    logging.error(response_data)
    return    resp
+
+
+def get_cover_bond_data(request):
+   sort_columns = request.GET.get('sort_columns')
+   sort_types = request.GET.get('sort_types')
+   page_num = request.GET.get('page_num')
+   page_size = request.GET.get('page_size')
+   #sort_columns:int,sort_types:int,page_num:int,page_size:intsort_columns:int,sort_types:int,page_num:int,page_size:int
+   result_json_obj = convert_bond.get_df_cover_bond_data(sort_columns,sort_types,page_num,page_size)
+   response_data = {
+      "code": 200,  # 状态码，200 表示成功
+      "message": "请求成功",  # 状态描述信息
+      "data": result_json_obj  # 实际返回的数据
+   }
+   resp = JsonResponse(response_data, safe=False)
+   logging.error(response_data)
+   return    resp
+

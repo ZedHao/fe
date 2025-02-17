@@ -21,4 +21,6 @@ from service import  stock
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('get_stock/', stock.get_stock_data, name='get_stock_data'),
+    path('get_covert_bond/', stock.get_cover_bond_data, name='get_cover_bond_data'),
+
 ]
