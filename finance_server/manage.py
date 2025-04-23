@@ -2,6 +2,9 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+sys.path.insert(0, '../')  # 到根目录有几层添加几层
+# 常用方式2
+#sys.path.insert(0, '.')  # 直接添加
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(base_dir)

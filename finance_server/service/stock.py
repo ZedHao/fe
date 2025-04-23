@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import pdb
-from tkinter import EXCEPTION
 import pandas as pd
 from io import StringIO
 import logging

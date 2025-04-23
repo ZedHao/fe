@@ -1,0 +1,14 @@
+.PHONY:run
+run:
+	python manage.py runserver  8080
+#
+#pyenv install --list：查看所有可安装的Python版本。
+#pyenv install <version>：安装指定版本的Python。
+#pyenv uninstall <version>：卸载指定版本的Python。
+active:
+    #pyenv local 3.13.2
+    pyenv local 3.8.10
+freeze:
+    pip freeze > requirements.txt
+install:
+    pip install -r requirements.txt
