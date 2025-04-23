@@ -5,9 +5,11 @@ run:
 #pyenv install --list：查看所有可安装的Python版本。
 #pyenv install <version>：安装指定版本的Python。
 #pyenv uninstall <version>：卸载指定版本的Python。
+# pip install aiohttp-3.11.18-cp310-cp310-macosx_11_0_arm64.whl
+
 active:
     #pyenv local 3.13.2
-    pyenv local 3.8.10
+    #pyenv local 3.8.10
 freeze:
     pip freeze > requirements.txt
 install:
