@@ -1,0 +1,200 @@
+{"operationName":"getSocialAuthUrl","variables":{"schema":"EVM:0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819","type":"DISCORD","captchaInput":{"lotNumber":"3a1e2329854842ed96246e3a125273a7","captchaOutput":"ZyMIQdJbDumhcG0LxBiyEFh8SRSnGszMuF50UKrFfLhNFBggs3D9K9jemKJ1spbRbfw-Erp7FvsUseR1P4yjvm7j4epeGR6TTmYG2pamlR8DS6uUOSEjykW5HCpXGczt6mFIN2rIPZ_YdFU4TZ3t9bTqQGKD5LxMEMoCoirXUV3zM2dsQp7YhkMXGhyCum07wkDvdMKjnaGU5VZ6wowGvBLOop213N27poM7LqTWl75gwZiQMAOWHkQ7nOwfpC-u6zQDpAamPf_8AWTTcy3JGFpqJASotNsKPLOvVJT7_Z51cxuBVBr6wH5V3EZnujHj0iCAgea3XB82tb54LyAu8Scvn-s7xYzK17iUkSFSpBgICdlO60h5XJzOtAEVA6MVlXwnPTTC1dr0kMVoxttEIoTcqLjHGvFa3ejKuLkgz_sDE_FFfWPhZBOPmhJ5RfSxqHlH7SMjBwP9YAMKKvmxVx6qNev5GtcJ0YBGqoW29H8=","passToken":"0661d26dba59b5d5a7dafb5ac5a462ee126adf9d35d3ba30684b764934e74b5e","genTime":"1724675356"}},"query":"query getSocialAuthUrl($schema: String!, $type: SocialAccountType!, $captchaInput: CaptchaInput) {\n  getSocialAuthUrl(schema: $schema, type: $type, captchaInput: $captchaInput)\n}"}
+
+还有个captchaInput参数，代码里面没有
+
+
+{
+    "data": {
+        "getSocialAuthUrl": "https://discord.com/api/oauth2/authorize?client_id=947863296789323776\u0026redirect_uri=https://app.galxe.com\u0026response_type=code\u0026scope=identify guilds guilds.members.read\u0026prompt=consent\u0026state=dHBkHAIDRnm5KjDSBSSFmN4o7pgb7wX7"
+    }
+}
+state和log不一样，可能是实时计算的
+
+dc的
+client_id=947863296789323776&response_type=code&redirect_uri=https%3A%2F%2Fapp.galxe.com&scope=identify%20guilds%20guilds.members.read&state=Discord_Auth%2CEVM%3A0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819%2Cfalse%2CiriFQkuaVBNGrZXan8Vl6YckhjDsy7Gg&integration_type=0
+
+例子的evm只有小写，没有大写啊
+也没有
+
+
+url一样，但是这个是get请求啊，不是post
+client_id一样
+evm只有小写 TODO 可以改改试试
+
+
+curl 'https://discord.com/api/v9/oauth2/authorize?client_id=947863296789323776&response_type=code&redirect_uri=https%3A%2F%2Fapp.galxe.com&scope=identify%20guilds%20guilds.members.read&state=Discord_Auth%2CEVM%3A0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819%2Cfalse%2CiriFQkuaVBNGrZXan8Vl6YckhjDsy7Gg&integration_type=0' \
+  -H 'accept: */*' \
+  -H 'accept-language: zh-CN,zh;q=0.9' \
+  -H 'authorization: MTI1MDUxODkyNTYzNzMyMDczOA.GwBdan.mZ2VgLANJ9prjdPACi7-dnF77momHF0YOaRjFo' \
+  -H 'cookie: __dcfduid=a9f2fe5063a611efa8f97704d2328dc1; __sdcfduid=a9f2fe5163a611efa8f97704d2328dc1160d4f46df652bffe374bebe6290efee2dc2f40092778e415cfb1288aa263ee6; _cfuvid=uCL8WuwbtA7I7649tQ2_TzYWV5qI2PGEvwet7Q9HzUY-1724675293883-0.0.1.1-604800000; cf_clearance=cQzqtCLsAbhrBWG2uSdhMlijLjpAIlg9fULdE.0Mjhk-1724675299-1.2.1.1-oxceiLk4hIPFntGg_1MdsjF_A1m.ajztCLRj7k2e5uZd7oy9vm6qg9nXjEvprRYeLT0KUMtMU6hKeA00HLwTS1mrN4R2G55kxOsZK1lWU3_uLxWJkHEwnARd_NTissqJHFdHHJ.epRTM.MhaoppgMU42nMhJXTuK0OWiz1XRhorm3VyNIut.S69q3GU4y4M7rKFFUyrXowI2rkAJezMH.JjP7sta5h_6IGytLO49ZCRkTL4HuPKIdc9iqw2RblSSyFdr5Jy92jh01cJjyr2W3ShcFdmWWs1BrPjlUTQ1v92mFRU75fakZgNgllxS0byhkjW_Sg5jzoEUv0zomnXRTj.vczhQX86gcNUZytwxCWOrmzRm8RoJWcshW3T65745; __cfruid=52b3272f12f248d9ba8409d5ed1d5c9b9fca86d7-1724675685' \
+  -H 'dnt: 1' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://discord.com/oauth2/authorize?client_id=947863296789323776&redirect_uri=https%3A%2F%2Fapp.galxe.com&response_type=code&scope=identify%20guilds%20guilds.members.read&prompt=consent&state=Discord_Auth%2CEVM%3A0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819%2Cfalse%2CiriFQkuaVBNGrZXan8Vl6YckhjDsy7Gg' \
+  -H 'sec-ch-ua: "Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36' \
+  -H 'x-debug-options: bugReporterEnabled' \
+  -H 'x-discord-locale: zh-CN' \
+  -H 'x-discord-timezone: Asia/Shanghai' \
+  -H 'x-super-properties: eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiQ2hyb21lIiwiZGV2aWNlIjoiIiwic3lzdGVtX2xvY2FsZSI6InpoLUNOIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzEyNS4wLjAuMCBTYWZhcmkvNTM3LjM2IiwiYnJvd3Nlcl92ZXJzaW9uIjoiMTI1LjAuMC4wIiwib3NfdmVyc2lvbiI6IjEwIiwicmVmZXJyZXIiOiJodHRwczovL2Rpc2NvcmQuY29tLz9kaXNjb3JkdG9rZW49TVRJMU1EVXhPRGt5TlRZek56TXlNRGN6T0EuR0kzM21nLlVvZDVuNGJKZzNQNFhjdmJFQVQxLTVPN3M0Z2RMbGJGVk1hMzNrIiwicmVmZXJyaW5nX2RvbWFpbiI6ImRpc2NvcmQuY29tIiwicmVmZXJyZXJfY3VycmVudCI6IiIsInJlZmVycmluZ19kb21haW5fY3VycmVudCI6IiIsInJlbGVhc2VfY2hhbm5lbCI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjMyMTUzMSwiY2xpZW50X2V2ZW50X3NvdXJjZSI6bnVsbH0='
+
+
+
+
+{
+    "application": {
+        "id": "947863296789323776",
+        "name": "GalxeBot",
+        "icon": "e863694a8f0d5b723b3bb538f948287b",
+        "description": "Galxe Bot is sent by Galxe, to help you reward and manage your community with credentials and OATs.\nhttps://galxe.com/",
+        "summary": "",
+        "type": null,
+        "is_monetized": false,
+        "is_verified": true,
+        "hook": true,
+        "storefront_available": false,
+        "bot_public": true,
+        "bot_require_code_grant": false,
+        "terms_of_service_url": "https://galxe.com/",
+        "privacy_policy_url": "https://galxe.com/",
+        "install_params": {
+            "scopes": [
+                "applications.commands",
+                "bot"
+            ],
+            "permissions": "2417034304"
+        },
+        "integration_types_config": {
+            "0": {}
+        },
+        "verify_key": "578a201e7a6a83119518142aafe570a8f327568c0891b78bd4f19cb4e73400c6",
+        "flags": 2359296,
+        "tags": [
+            "Credential",
+            "OAT",
+            "Project Galaxy"
+        ]
+    },
+    "user": {
+        "id": "1250518925637320738",
+        "username": "natsssor63046",
+        "global_name": null,
+        "avatar": null,
+        "avatar_decoration_data": null,
+        "discriminator": "0",
+        "public_flags": 0,
+        "clan": null
+    },
+    "authorized": true,
+    "integration_type": 0,
+    "redirect_uri": "https://app.galxe.com"
+}
+返回值完全不一样啊
+是不是post和get的区别
+
+
+curl 'https://discord.com/api/v9/oauth2/authorize?client_id=947863296789323776&response_type=code&redirect_uri=https%3A%2F%2Fapp.galxe.com&scope=identify%20guilds%20guilds.members.read&state=Discord_Auth%2CEVM%3A0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819%2Cfalse%2CiriFQkuaVBNGrZXan8Vl6YckhjDsy7Gg' \
+  -H 'accept: */*' \
+  -H 'accept-language: zh-CN,zh;q=0.9' \
+  -H 'authorization: MTI1MDUxODkyNTYzNzMyMDczOA.GwBdan.mZ2VgLANJ9prjdPACi7-dnF77momHF0YOaRjFo' \
+  -H 'content-type: application/json' \
+  -H 'cookie: __dcfduid=a9f2fe5063a611efa8f97704d2328dc1; __sdcfduid=a9f2fe5163a611efa8f97704d2328dc1160d4f46df652bffe374bebe6290efee2dc2f40092778e415cfb1288aa263ee6; _cfuvid=uCL8WuwbtA7I7649tQ2_TzYWV5qI2PGEvwet7Q9HzUY-1724675293883-0.0.1.1-604800000; cf_clearance=cQzqtCLsAbhrBWG2uSdhMlijLjpAIlg9fULdE.0Mjhk-1724675299-1.2.1.1-oxceiLk4hIPFntGg_1MdsjF_A1m.ajztCLRj7k2e5uZd7oy9vm6qg9nXjEvprRYeLT0KUMtMU6hKeA00HLwTS1mrN4R2G55kxOsZK1lWU3_uLxWJkHEwnARd_NTissqJHFdHHJ.epRTM.MhaoppgMU42nMhJXTuK0OWiz1XRhorm3VyNIut.S69q3GU4y4M7rKFFUyrXowI2rkAJezMH.JjP7sta5h_6IGytLO49ZCRkTL4HuPKIdc9iqw2RblSSyFdr5Jy92jh01cJjyr2W3ShcFdmWWs1BrPjlUTQ1v92mFRU75fakZgNgllxS0byhkjW_Sg5jzoEUv0zomnXRTj.vczhQX86gcNUZytwxCWOrmzRm8RoJWcshW3T65745; __cfruid=52b3272f12f248d9ba8409d5ed1d5c9b9fca86d7-1724675685' \
+  -H 'dnt: 1' \
+  -H 'origin: https://discord.com' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://discord.com/oauth2/authorize?client_id=947863296789323776&redirect_uri=https%3A%2F%2Fapp.galxe.com&response_type=code&scope=identify%20guilds%20guilds.members.read&prompt=consent&state=Discord_Auth%2CEVM%3A0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819%2Cfalse%2CiriFQkuaVBNGrZXan8Vl6YckhjDsy7Gg' \
+  -H 'sec-ch-ua: "Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36' \
+  -H 'x-debug-options: bugReporterEnabled' \
+  -H 'x-discord-locale: zh-CN' \
+  -H 'x-discord-timezone: Asia/Shanghai' \
+  -H 'x-super-properties: eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiQ2hyb21lIiwiZGV2aWNlIjoiIiwic3lzdGVtX2xvY2FsZSI6InpoLUNOIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzEyNS4wLjAuMCBTYWZhcmkvNTM3LjM2IiwiYnJvd3Nlcl92ZXJzaW9uIjoiMTI1LjAuMC4wIiwib3NfdmVyc2lvbiI6IjEwIiwicmVmZXJyZXIiOiJodHRwczovL2Rpc2NvcmQuY29tLz9kaXNjb3JkdG9rZW49TVRJMU1EVXhPRGt5TlRZek56TXlNRGN6T0EuR0kzM21nLlVvZDVuNGJKZzNQNFhjdmJFQVQxLTVPN3M0Z2RMbGJGVk1hMzNrIiwicmVmZXJyaW5nX2RvbWFpbiI6ImRpc2NvcmQuY29tIiwicmVmZXJyZXJfY3VycmVudCI6IiIsInJlZmVycmluZ19kb21haW5fY3VycmVudCI6IiIsInJlbGVhc2VfY2hhbm5lbCI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjMyMTUzMSwiY2xpZW50X2V2ZW50X3NvdXJjZSI6bnVsbH0=' \
+  --data-raw '{"permissions":"0","authorize":true,"integration_type":0,"location_context":{"guild_id":"10000","channel_id":"10000","channel_type":10000}}'
+确实有post部分啊
+body = {
+            'permissions': '0',
+            'authorize': True,
+            'integration_type': 0,
+        }
+        但是参数比代码多
+
+
+
+  curl 'https://graphigo.prd.galaxy.eco/query' \
+  -H 'accept: */*' \
+  -H 'accept-language: zh-CN,zh;q=0.9' \
+  -H 'authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJHYWx4ZUlEIjoiVlFBWDlab2ZtbnVOUnNySm5HVjlRbyIsIkFkZHJlc3MiOiIweDQxNDM5YTA3OGIwY2Y0ZGExMGY5MmUyZDNiM2RhYzRiZmFiNmQ4MTkiLCJBZGRyZXNzVHlwZSI6MSwiQWNjb3VudFVzZXJuYW1lIjoiIiwiTm9uY2UiOiJ1dU1XM29KUzI5U3dHZnMyeiIsImV4cCI6MTcyNTI4MDA3MiwiSnd0RXJyb3IiOm51bGx9.W9iQbPQRFF-Kmg_9E9w5xI9zTwkZj4FfKIiDSZ8YtUQ' \
+  -H 'content-type: application/json' \
+  -H 'dnt: 1' \
+  -H 'origin: https://app.galxe.com' \
+  -H 'priority: u=1, i' \
+  -H 'request-id: 77ab5560-efe3-4a22-be6a-cbf32531e9ca' \
+  -H 'sec-ch-ua: "Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: cross-site' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36' \
+  -H 'x-unique-link-id: c02cd62b1f3772a1c861be5076a8da5ffff5aec403a8ade417d57528b2818ddd' \
+  --data-raw $'{"operationName":"checkDiscordAccount","variables":{"input":{"address":"EVM:0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819","token":"e187PEl8lEmkWyvc0vVqegdRxtF16v","state":"iriFQkuaVBNGrZXan8Vl6YckhjDsy7Gg"}},"query":"mutation checkDiscordAccount($input: VerifyDiscordAccountInput\u0021) {\\n  checkDiscordAccount(input: $input) {\\n    address\\n    discordUserID\\n    __typename\\n  }\\n}"}'
+  
+address的部分居然是evm前缀 TODO
+然后加小写
+
+
+EVM:0x41439a078b0cf4da10f92e2d3b3dac4bfab6d819
+我观察地址统一都是这样的格式
+TODO
+
+{
+    "errors": [
+        {
+            "message": "Invalid state",
+            "path": [
+                "checkDiscordAccount"
+            ],
+            "extensions": {
+                "args": null,
+                "code": "InvalidArgument",
+                "domain": "USER",
+                "error": "redis: nil",
+                "reason": "Invalid state"
+            }
+        }
+    ],
+    "data": {
+        "checkDiscordAccount": null
+    }
+}
+页面也报错啊
+
+
+curl 'https://graphigo.prd.galaxy.eco/query' \
+  -H 'accept: */*' \
+  -H 'accept-language: zh-CN,zh;q=0.9,en;q=0.8' \
+  -H 'authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJHYWx4ZUlEIjoiRWpVamJ6Wm5STjdqVm9laFlMaTdhIiwiQWRkcmVzcyI6IjB4RjA2ZURkMWNmNjRGMEI3RTdjNjcwNjYzNDE1NDQ4NEVkRDg3MEY2NSIsIkFkZHJlc3NUeXBlIjoxLCJBY2NvdW50VXNlcm5hbWUiOiIiLCJOb25jZSI6InZqQlhGNDdzYVhjZ0R6UGplIiwiZXhwIjoxNzI1MzQ4MTY1LCJKd3RFcnJvciI6bnVsbH0.WZJJ5PofF1rpJzb84Qy7YmDANsm89sQbQyt86Fkn0o8' \
+  -H 'content-type: application/json' \
+  -H 'origin: https://app.galxe.com' \
+  -H 'priority: u=1, i' \
+  -H 'request-id: 4bed5f63-9755-4ab8-b701-3e0ec666277e' \
+  -H 'sec-ch-ua: "Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: cross-site' \
+  -H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36' \
+  -H 'x-unique-link-id: efbde2c3aee204a69b7696d4b10ff31137fe78e3946306284f806e2dfc68b805' \
+  --data-raw $'{"operationName":"BasicUserInfo","variables":{"address":"EVM:0xF06eDd1cf64F0B7E7c6706634154484EdD870F65"},"query":"query BasicUserInfo($address: String\u0021) {\\n  addressInfo(address: $address) {\\n    id\\n    username\\n    avatar\\n    address\\n    evmAddressSecondary {\\n      address\\n      __typename\\n    }\\n    hasEmail\\n    solanaAddress\\n    aptosAddress\\n    seiAddress\\n    injectiveAddress\\n    flowAddress\\n    starknetAddress\\n    bitcoinAddress\\n    suiAddress\\n    stacksAddress\\n    azeroAddress\\n    archwayAddress\\n    bitcoinSignetAddress\\n    xrplAddress\\n    hasEvmAddress\\n    hasSolanaAddress\\n    hasAptosAddress\\n    hasInjectiveAddress\\n    hasFlowAddress\\n    hasStarknetAddress\\n    hasBitcoinAddress\\n    hasSuiAddress\\n    hasStacksAddress\\n    hasAzeroAddress\\n    hasArchwayAddress\\n    hasBitcoinSignetAddress\\n    hasXrplAddress\\n    hasTwitter\\n    hasGithub\\n    hasDiscord\\n    hasTelegram\\n    hasWorldcoin\\n    displayEmail\\n    displayTwitter\\n    displayGithub\\n    displayDiscord\\n    displayTelegram\\n    displayWorldcoin\\n    displayNamePref\\n    email\\n    twitterUserID\\n    twitterUserName\\n    githubUserID\\n    githubUserName\\n    discordUserID\\n    discordUserName\\n    telegramUserID\\n    telegramUserName\\n    worldcoinID\\n    enableEmailSubs\\n    subscriptions\\n    isWhitelisted\\n    isInvited\\n    isAdmin\\n    accessToken\\n    __typename\\n  }\\n}"}'
+
+  获取基础信息的address为什么没小写？

@@ -1,0 +1,135 @@
+8-17
+学人家的，就是后端调银河接口
+user_name人家用了一个游戏的接口，真牛逼
+需要准备，私钥，地址，邮箱的账号和密码
+不需要助记词
+
+
+
+8-18
+中文py遍历地址
+每个地址生成account对象
+service属性有account对象
+service属性有dao对象
+
+8-18
+完成了注册银河
+我真牛逼！！！哈哈哈
+
+
+8-19
+现在开发绑定邮箱的功能
+
+
+8-21
+2024-08-21 12:50:03|SUCCESS|用户绑定邮箱成功 name=GIT02 address=0x9d40e4fd5f84A9115d26B5703C87F1Cee353Dd9C
+我草终于成功了一次
+
+
+2
+新的异常，可能银河发了邮件，但是邮箱没有收到
+也可能银河延迟了一会再发的邮件不一定
+确认了，是rambler邮箱的问题，我用qq邮箱就可以收到银河的验证码
+可能银河把rambler邮箱当垃圾了，不给邮件
+那我只能换了，踩坑了，不知道
+
+绑定邮箱科研成功，技术路线！！！
+2captcha验证码+买outlook邮箱+pop3协议（不能用imap协议，因为微软官方有问题无法登录）+python的poplib库
+
+
+8-22
+done的部分：注册银河，银河绑定邮箱，
+TODO的部分：银河绑定推特，银河做推特关注任务，银河做签到任务，做答题任务
+先干那个？推特吧
+
+8-27
+放弃了银河dc的部分
+dc就手动了
+下面是写任务的部分
+也安排一个顺序
+1 看网页【不存在一个叫做签到的类型任务，都是看网页】
+2 答题
+3 follow space
+4 推特关注点赞转发
+
+8-29
+完成了银河看网页的任务，能领取积分
+用的move签到完成
+下一步是答题任务
+# https://app.galxe.com/quest/Movement/GCZkTtx9hF  这是move的每天签到50分的任务  notice  成功！！
+
+
+8-30
+哈哈
+完成了答题，
+完成了推特关注
+完成了关注银河space空间
+重写了推特的service，改为了同步代码
+# https://app.galxe.com/quest/Movement/GCr62tvWhX  这是move的看网页和关注space的任务。 notice  成功！！
+# https://app.galxe.com/quest/Movement/GCBiQtgo1C  这是move的看网页，答题，推特关注，space关注的任务  notice  成功！！
+
+下一步是，把zhu0的号导入db，然后用代码去跑
+然后买银河kyc，F06-F10要买，6个
+zhu02-zhu20要买，19个
+25*10=250的总成本
+
+一共凑30个kyc
+
+9-2
+完成任务和领取奖励的函数在service层组合
+计算预期领取的分数
+任务分part1和part2，part1是前置任务
+record记录时候可以用v2 v3表示多次执行，没关系的
+TODO ip和账户绑定
+成功运行
+Autonomys Network
+https://app.galxe.com/quest/AutonomysNetwork/GCp7CtvBZw 护照，看网页，答题，推特关注
+
+9-3
+投产了
+不是很稳定，需求多多磨合
+
+SeekersAlliance/GCJdJtk1rB 只领取了分数，没有领取dc角色，这种算不算完成了，要看move官网的显示
+
+9-4
+今天更新领取nft的代码
+他是claim函数，但是实际现在银河的Route-X/GCpkxtkfqQ任务用的claimbatch函数
+成功完成Route-X/GCpkxtkfqQ任务
+
+链上部分加入更多重试代码
+考虑发送tx失败，但是实际上链成功的情况，需要用tx去判断是不是真的成功
+
+重新思考重试的问题
+所有的重试，应该在dao层完成，折算是一个简单的功能，service要封装更复杂的事情，所以重试应该在dao层完成
+我go代码也是这么写的
+
+9-6
+定义每一个账户都有一个固定的header
+这个header不仅仅是推特使用，银河和dc都使用
+但是这个header是基础，每个场景（推特，dc，银河）都添加自己对应的特殊header
+
+
+9-7
+买推特现在是买一个月的，大概0.8r一个，买3次，就是2.4r，
+可能也考虑买4r一个的，等于5次跑银河
+
+让推特http header更真实，加入了x-client-transaction-id和x-client-uuid
+单例模式，复用和推特链接的session
+
+推特关注实际上成功了，但是SyncCredentialValue的resp是allow=false，我重试了SyncCredentialValue，还是allow=false
+TODO 我加上验证码再和SyncCredentialValue重试，试试
+
+2014年的号，莫名其妙的token挂了，但是账号没挂，我重新登录账号获取token就好了
+
+9-9
+1 更随机，每个account有不同的任务list
+2 分开quiz和twitter 的py文件
+3 twitter遇见token失效，随机重试。重要信息打印到另一个log文件
+
+9-20
+优化了推特header，尽量真更
+解决之前经常被推特识别为机器人的问题。但是不知道优化效果好不好
+'priority': 'u=1, i', # update 9-20 加了字段
+'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8', # update 9-20 除了英语加了其他
+'referer': 'https://x.com/', # TODO 如果是转推的话，那么可以用当前的链接，更真实
+# 'x-client-uuid': random.choice(model_twitter.x_client_uuid_list), 定义在db里面

@@ -1,0 +1,11 @@
+https://bscscan.com/tx/0x3d2fdfa866dc7d21726a4f15226024162ecdb0cad007848487e84eeda9b4ac4f
+这是一次 bsc链 领取3个nft奖励的tx
+
+直接在tx里面看不见参数
+但是在这里能看见具体参数
+https://bscscan.com/inputdatadecoder?tx=0x3d2fdfa866dc7d21726a4f15226024162ecdb0cad007848487e84eeda9b4ac4f
+
+
+
+最后查出来无法领取银河nft，报错{'code': -32003, 'message': 'insufficient funds for gas * price + value'})
+的原因是，rpc有问题，太傻逼了
