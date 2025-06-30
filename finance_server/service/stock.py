@@ -14,6 +14,7 @@ def get_stock_data(request):
    stock_code = request.GET.get('stock_code')
    start_date = request.GET.get('start_date')
    end_date = request.GET.get('end_date')
+
    # 检查参数是否都存在
    if not all([stock_code, start_date, end_date]):
       return JsonResponse({'error': 'Missing required parameters'}, status=400)

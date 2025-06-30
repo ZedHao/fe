@@ -2,7 +2,7 @@
   <header class="header">
     <div class="logo">
       <img src="../assets/logo.png" alt="Logo" class="logo-img" />
-      <span class="site-name">大蓝黄财经科技</span>
+      <span class="site-name">测试财经</span>
     </div>
     <nav class="nav">
       <ul class="nav-list">

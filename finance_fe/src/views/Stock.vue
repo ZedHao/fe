@@ -114,9 +114,11 @@ async function searchStocks() {
     console.log(typeof getStockData); // 检查类型
 
     const response = await getStockData(stockCode.value,startDate.value,endDate.value)
+    console.error('-------------response:', response);
+
     stockData.value = response;
   } catch (error) {
-    console.error('搜索失败:', error);
+    alert('搜索失败:'+error)
   }
 }
 </script>
