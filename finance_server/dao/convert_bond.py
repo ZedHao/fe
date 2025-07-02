@@ -2,7 +2,7 @@ from logging import exception
 
 import requests
 import json
-
+import pdb
 # 请求的 URL
 # https://searchadapter.eastmoney.com/api/suggest/get?input=1232&type=14&securitytype=1,2,3,4,8,21,25,27&count=5
 # https://searchadapter.eastmoney.com/api/suggest/get?input=1232&type=14&securitytype=1,2,3,4,8,21,25,27&count=3
@@ -42,13 +42,19 @@ def search_cover_bond_data(cb_name:str,cb_code:int) :
         'input': cb_name if cb_code == 0 else cb_code,
         'type': 14,
         'count': 3,
-        'securitytype':[1,2,3,4,8,21,25]
+        'securitytype':"1,2,3,4,8,21,25,27"
     }
+    # 创建请求对象（不发送请求），用于获取构建后的URL
+    request = requests.Request('GET', url, params=params)
+    prepared_request = request.prepare()
 
-    # 发送请求
-    response = requests.get(url, params=params)
+    # 打印完整的请求URL
+    print("完整请求URL：", prepared_request.url)
+    pdb.set_trace()
+    # 若需要发送请求并获取响应，可继续以下操作
+    session = requests.Session()
+    response = session.send(prepared_request)
     response.raise_for_status()  # 检查请求是否成功
-
     # 处理 JSONP 数据，提取出有效的 JSON 部分
     jsonp_data = response.text
     start_index = jsonp_data.find('{')
