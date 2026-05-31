@@ -1,0 +1,17 @@
+{
+  "name": "etf",
+  "version": "1.0.0",
+  "description": "一个类似 HaoETF 的基金折溢价查询工具。📊",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "iconv-lite": "^0.7.2"
+  }
+}

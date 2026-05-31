@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>猪猪 投资日历</title>
+<style>
+  :root {
+    --bg: #0f1219;
+    --card: #181d29;
+    --card-hover: #1e2538;
+    --border: #262e3f;
+    --text: #e2e8f0;
+    --text-dim: #7b8499;
+    --text-muted: #4a5568;
+    --accent: #4f7eff;
+    --accent-dim: rgba(79,126,255,0.15);
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --warning: #f97316;
+    --purple: #a855f7;
+    --cyan: #22d3ee;
+    --pink: #ec4899;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #141a2a 0%, #1a2140 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 14px;
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; text-decoration: none;
+    transition: all .2s;
+  }
+  .back-btn:hover { background: var(--card-hover); border-color: var(--accent); }
+  .header-title h1 { font-size: 20px; font-weight: 700; }
+  .header-title h1 .accent { color: var(--accent); }
+  .header-right { font-size: 12px; color: var(--text-dim); }
+  .main { max-width: 1200px; margin: 0 auto; padding: 16px 24px; }
+  .section { margin-bottom: 20px; }
+  .section-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .icon { width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+  .section-title .icon.ipo { background: rgba(79,126,255,0.2); color: var(--accent); }
+  .section-title .icon.cb { background: rgba(34,211,238,0.2); color: var(--cyan); }
+  .section-title .icon.redemption { background: rgba(245,158,11,0.2); color: var(--orange); }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; margin-bottom: 12px;
+  }
+  .card-header {
+    padding: 14px 16px; font-size: 14px; font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-body { padding: 0; }
+  table {
+    width: 100%; border-collapse: collapse;
+  }
+  th, td { padding: 10px 14px; font-size: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: 500; font-size: 11px; background: rgba(255,255,255,0.02); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--card-hover); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 500;
+  }
+  .tag-ipo { background: rgba(79,126,255,0.15); color: var(--accent); }
+  .tag-cb { background: rgba(34,211,238,0.15); color: var(--cyan); }
+  .tag-expire { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag-lastday { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .tag-listed { background: rgba(34,197,94,0.15); color: var(--green); }
+  .tag-none { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+  .date-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    white-space: nowrap;
+  }
+  .date-badge.today { background: rgba(79,126,255,0.2); color: var(--accent); }
+  .date-badge.tomorrow { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .date-badge.soon { background: rgba(239,68,68,0.1); color: var(--red); }
+  .date-badge.normal { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px;
+  }
+  .empty-state .big-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.5; }
+  .loading-state {
+    text-align: center; padding: 60px 20px;
+  }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-state {
+    text-align: center; padding: 40px 20px; color: var(--red);
+  }
+  .refresh-bar {
+    display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px;
+  }
+  .refresh-btn {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .refresh-btn:hover { background: var(--card-hover); border-color: var(--accent); }
+  .tooltip { position: relative; cursor: help; }
+  .summary-bar {
+    display: flex; gap: 16px; flex-wrap: wrap; padding: 12px 16px;
+    background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 16px;
+  }
+  .summary-item { text-align: center; }
+  .summary-item .num { font-size: 22px; font-weight: 700; }
+  .summary-item .label { font-size: 11px; color: var(--text-dim); }
+  .section-tabs {
+    display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border);
+    padding-bottom: 0; overflow-x: auto;
+  }
+  .section-tab {
+    padding: 10px 18px; font-size: 13px; cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent; color: var(--text-dim);
+    transition: all .2s;
+  }
+  .section-tab:hover { color: var(--text); }
+  .section-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .d-none { display: none; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .tag-redemption { background: rgba(249,115,22,0.15); color: var(--orange); }
+  
+  @media (max-width: 640px) {
+    .main { padding: 12px; }
+    th, td { padding: 8px 10px; font-size: 11px; }
+    .header { padding: 12px 16px; }
+    .summary-bar { gap: 12px; }
+    .summary-item .num { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <a href="/" class="back-btn">‹</a>
+      <div class="header-title">
+        <h1><span class="accent">📅</span> 投资日历</h1>
+      </div>
+    </div>
+    <div class="header-right" id="updateTime"></div>
+  </div>
+</div>
+
+<div class="main">
+  <div id="summaryBar" class="summary-bar"></div>
+
+  <div class="section-tabs" id="tabs">
+    <div class="section-tab active" data-tab="all">全部</div>
+    <div class="section-tab" data-tab="ipo">新股申购</div>
+    <div class="section-tab" data-tab="cb">可转债到期</div>
+    <div class="section-tab" data-tab="lastday">最后交易日</div>
+    <div class="section-tab" data-tab="listed">上市提醒</div>
+  </div>
+
+  <div class="refresh-bar">
+    <button class="refresh-btn" onclick="loadData()">⟳ 刷新</button>
+  </div>
+
+  <div id="loading" class="loading-state">
+    <div class="spinner"></div>
+    <div>加载中...</div>
+  </div>
+
+  <div id="error" class="error-state d-none"></div>
+
+  <div id="content" class="d-none">
+    <!-- 新股申购 -->
+    <div class="section" id="section-ipo">
+      <div class="section-title">
+        <span class="icon ipo">📄</span> 新股申购
+      </div>
+      <div class="card">
+        <div class="card-body" id="ipoContent"></div>
+      </div>
+    </div>
+
+    <!-- 可转债到期 / 最后交易日 -->
+    <div class="section" id="section-cb">
+      <div class="section-title">
+        <span class="icon cb">🔖</span> 可转债事件
+      </div>
+      <div class="card">
+        <div class="card-body" id="cbContent"></div>
+      </div>
+    </div>
+
+    <!-- 上市提醒 -->
+    <div class="section" id="section-listed">
+      <div class="section-title">
+        <span class="icon ipo">🚀</span> 上市提醒
+      </div>
+      <div class="card">
+        <div class="card-body" id="listedContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const today = new Date();
+const todayStr = today.toISOString().slice(0, 10);
+
+function d(n) { return n < 10 ? '0' + n : n; }
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d1 = new Date(dateStr);
+  const diff = Math.floor((d1 - today) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
+function dateBadge(dateStr) {
+  if (!dateStr) return '';
+  const d = daysUntil(dateStr);
+  let cls = 'normal', text = dateStr.slice(5);
+  if (dateStr === todayStr) { cls = 'today'; text = '今天'; }
+  else if (d === 1) { cls = 'tomorrow'; text = '明天'; }
+  else if (d >= 0 && d <= 3) { cls = 'soon'; text = d + '天后'; }
+  else if (d > 3 && d <= 14) { text = d + '天后'; }
+  else if (d > 14) { text = dateStr.slice(5); }
+  return `<span class="date-badge ${cls}">${text}</span>`;
+}
+
+function marketTag(market) {
+  if (!market) return '<span class="tag tag-none">未知</span>';
+  if (market.includes('北京')) return '<span class="tag tag-ipo">北交所</span>';
+  if (market.includes('深圳')) return '<span class="tag tag-lastday">深交所</span>';
+  if (market.includes('上海')) return '<span class="tag tag-listed">上交所</span>';
+  if (market.includes('科创')) return '<span class="tag tag-redemption">科创板</span>';
+  if (market.includes('创业')) return '<span class="tag tag-cb">创业板</span>';
+  return '<span class="tag tag-none">' + market + '</span>';
+}
+
+async function loadData() {
+  document.getElementById('loading').classList.remove('d-none');
+  document.getElementById('error').classList.add('d-none');
+  document.getElementById('content').classList.add('d-none');
+
+  try {
+    const res = await fetch('/api/calendar');
+    if (!res.ok) throw new Error('请求失败');
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    render(json);
+    document.getElementById('loading').classList.add('d-none');
+    document.getElementById('content').classList.remove('d-none');
+    document.getElementById('updateTime').textContent = '更新于 ' + new Date().toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  } catch (e) {
+    document.getElementById('loading').classList.add('d-none');
+    document.getElementById('error').classList.remove('d-none');
+    document.getElementById('error').textContent = '❌ ' + e.message;
+  }
+}
+
+function render(data) {
+  const ipo = data.ipo || [];
+  const ipoTx = data.ipoTx || [];
+  const cb = data.cb || [];
+  const listed = data.listed || [];
+
+  // 统计
+  const totalIPO = ipo.filter(i => daysUntil(i.apply_date) >= 0).length;
+  const totalCB = cb.filter(c => daysUntil(c.date) >= 0).length;
+  const totalListed = listed.filter(l => daysUntil(l.date) >= 0).length;
+
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="summary-item"><div class="num">${ipo.length}</div><div class="label">待申购</div></div>
+    <div class="summary-item"><div class="num">${cb.length}</div><div class="label">转债事件</div></div>
+    <div class="summary-item"><div class="num">${listed.length}</div><div class="label">即将上市</div></div>
+  `;
+
+  // 新股申购
+  document.getElementById('ipoContent').innerHTML = ipo.length
+    ? `<table>
+        <thead><tr>
+          <th>代码</th><th>名称</th><th>发行价(元)</th><th>市盈率</th><th>申购日期</th><th>顶格申购</th><th>市场</th>
+        </tr></thead>
+        <tbody>${ipo.map(i => `<tr>
+          <td>${i.code}</td>
+          <td>${i.name}</td>
+          <td>${i.price || '-'}</td>
+          <td>${i.pe || '-'}</td>
+          <td>${dateBadge(i.apply_date)}</td>
+          <td>${i.apply_upper ? (i.apply_upper / 10000).toFixed(2) + '万元' : '-'}</td>
+          <td>${marketTag(i.trade_market)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`
+    : '<div class="empty-state"><div class="big-icon">📭</div><div>暂无新股申购</div></div>';
+
+  // 可转债
+  document.getElementById('cbContent').innerHTML = cb.length
+    ? `<table>
+        <thead><tr>
+          <th>代码</th><th>名称</th><th>事件类型</th><th>日期</th>
+        </tr></thead>
+        <tbody>${cb.map(c => `<tr>
+          <td>${c.code}</td>
+          <td>${c.name}</td>
+          <td><span class="tag ${c.event_type === '到期' ? 'tag-expire' : 'tag-lastday'}">${c.event_type}</span></td>
+          <td>${dateBadge(c.date)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`
+    : '<div class="empty-state"><div class="big-icon">📭</div><div>暂无可转债事件</div></div>';
+
+  // 上市
+  document.getElementById('listedContent').innerHTML = listed.length
+    ? `<table>
+        <thead><tr>
+          <th>代码</th><th>名称</th><th>上市日期</th><th>发行价(元)</th><th>市场</th>
+        </tr></thead>
+        <tbody>${listed.map(l => `<tr>
+          <td>${l.code}</td>
+          <td>${l.name}</td>
+          <td>${dateBadge(l.date)}</td>
+          <td>${l.price || '-'}</td>
+          <td>${marketTag(l.trade_market)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`
+    : '<div class="empty-state"><div class="big-icon">📭</div><div>暂无上市提醒</div></div>';
+}
+
+// Tab切换
+document.querySelectorAll('.section-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    const v = this.dataset.tab;
+    document.querySelectorAll('.section').forEach(s => s.classList.add('d-none'));
+    if (v === 'all') {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('d-none'));
+    } else if (v === 'ipo') {
+      document.getElementById('section-ipo').classList.remove('d-none');
+    } else if (v === 'listed') {
+      document.getElementById('section-listed').classList.remove('d-none');
+    } else if (v === 'cb' || v === 'lastday') {
+      document.getElementById('section-cb').classList.remove('d-none');
+    }
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>

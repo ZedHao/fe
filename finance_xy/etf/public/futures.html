@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猪猪期货 · 贴水基差查询</title>
+<style>
+  :root {
+    --bg: #0f1219;
+    --card: #181d29;
+    --card-hover: #1e2538;
+    --border: #262e3f;
+    --text: #e2e8f0;
+    --text-dim: #7b8499;
+    --text-muted: #4a5568;
+    --accent: #6366f1;
+    --accent-dim: rgba(99,102,241,0.15);
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --warning: #f97316;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #141a2a 0%, #1a2140 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 14px;
+  }
+  .header-inner {
+    max-width: 1500px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); flex-shrink: 0; }
+  .header-title { line-height: 1.3; }
+  .header-title h1 { font-size: 22px; font-weight: 700; }
+  .header-title h1 .accent { background: linear-gradient(135deg,#6366f1,#8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header-title .sub { color: var(--text-dim); font-size: 11px; }
+  .header-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .update-time { color: var(--text-dim); font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  .update-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .update-dot.loading { background: var(--accent); animation: blink .6s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .update-dot.fail { background: var(--red); animation: none; }
+  .main { max-width: 1500px; margin: 0 auto; padding: 14px 24px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .toolbar .search-wrap { position: relative; flex: 1; min-width: 160px; max-width: 260px; }
+  .toolbar .search-wrap input {
+    width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px 8px 30px; color: var(--text); font-size: 13px; outline: none;
+  }
+  .toolbar .search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .toolbar .search-wrap .icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+  .toolbar select {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 26px 8px 10px; color: var(--text); font-size: 12px; outline: none;
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%237b8499' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+  }
+  .toolbar select:focus { border-color: var(--accent); }
+  .btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: all .2s; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+  .stats-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    font-size: 12px; margin-bottom: 12px; padding: 8px 14px;
+    background: var(--card); border-radius: 8px; border: 1px solid var(--border);
+  }
+  .stats-bar .pill {
+    display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 500;
+  }
+  .stats-bar .pill.backwardation { background: rgba(34,197,94,0.12); color: var(--green); }
+  .stats-bar .pill.contango { background: rgba(239,68,68,0.1); color: var(--red); }
+  .table-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--card); }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+  thead { position: sticky; top: 0; z-index: 2; }
+  th {
+    background: #1a2035; padding: 9px 5px; text-align: right; font-weight: 600;
+    border-bottom: 1px solid var(--border); color: var(--text-dim); font-size: 11px;
+    cursor: pointer; user-select: none;
+  }
+  th:hover { color: var(--text); }
+  th:first-child, td:first-child { text-align: left; padding-left: 12px; }
+  th .sa { margin-left: 2px; font-size: 9px; }
+  td {
+    padding: 7px 5px; text-align: right; border-bottom: 1px solid rgba(38,46,63,0.25);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(99,102,241,0.04); }
+  .backwardation-row td { background: rgba(34,197,94,0.03) !important; }
+  .cc { color: var(--text-dim); font-size: 11px; }
+  .nm { font-family: "SF Mono", "Monaco", "Menlo", monospace; font-size: 12px; }
+  .pm { font-weight: 600; font-family: "SF Mono", "Monaco", "Menlo", monospace; font-size: 12px; }
+  .pr { color: var(--red); } .pg { color: var(--green); } .po { color: var(--orange); }
+  .tag {
+    display: inline-block; font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 500;
+  }
+  .tag-bw { background: rgba(34,197,94,0.12); color: var(--green); }
+  .tag-ct { background: rgba(239,68,68,0.1); color: var(--red); }
+  .tag-if { background: rgba(99,102,241,0.1); color: var(--accent); }
+  .basis-bar { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+  .basis-bar-inner { width: 50px; height: 4px; border-radius: 2px; overflow: hidden; background: #252b3e; flex-shrink: 0; }
+  .basis-bar-fill { height: 100%; border-radius: 2px; }
+  .loading-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+  .loading-state .sp {
+    width: 30px; height: 30px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    margin: 0 auto 12px; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .legend {
+    margin-top: 14px; font-size: 11px; color: var(--text-dim); line-height: 1.8;
+    padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .data-source { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 10px; }
+  @media (max-width: 768px) {
+    .header { padding: 12px 14px 10px; }
+    .header h1 { font-size: 18px; }
+    .main { padding: 10px 12px; }
+    table { font-size: 11px; }
+    th, td { padding: 6px 4px; }
+    td:first-child, th:first-child { padding-left: 8px; }
+    .stats-bar { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <img src="logo.jpg" class="logo-avatar" alt="猪猪">
+      <div class="header-title">
+        <h1><span class="accent">猪猪期货</span><span class="sub"> 贴水基差查询</span></h1>
+        <div class="sub">国内期货主力合约 · 使用新浪K线数据</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="update-time">
+        <span class="update-dot" id="udot"></span>
+        <span id="utext">加载中...</span>
+      </span>
+      <button class="btn" onclick="location.href='/'" style="font-size:11px;padding:6px 10px;background:var(--accent);">📊 基金折溢价</button>
+      <button class="btn" onclick="location.href='futures.html'" style="font-size:11px;padding:6px 10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);">📈 期货基差</button>
+      <a href="perks.html" class="btn" style="text-decoration:none;font-size:11px;padding:6px 10px;background:linear-gradient(135deg,#f59e0b,#ef4444);">🎁 股东薅羊毛</a>
+      <button class="btn" id="refreshBtn" style="font-size:11px;padding:6px 10px;">🔄 刷新</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="si" placeholder="搜品种代码/名称..." oninput="onFilter()" autocomplete="off">
+    </div>
+    <select id="ff" onchange="onFilter()">
+      <option value="all">全部品种</option>
+      <option value="backwardation">🟢 仅贴水品种</option>
+      <option value="contango">🔴 仅升水品种</option>
+      <option value="cffex">📊 股指期货</option>
+      <option value="commodity">📦 商品期货</option>
+    </select>
+    <select id="sf" onchange="onFilter()">
+      <option value="all">全部交易所</option>
+      <option value="cffex">中金所</option>
+      <option value="shfe">上期所</option>
+      <option value="dce">大商所</option>
+      <option value="zce">郑商所</option>
+      <option value="ine">能源中心</option>
+    </select>
+    <button class="btn btn-secondary" onclick="onReset()">重置</button>
+  </div>
+
+  <div class="stats-bar" id="sbar">
+    <span style="color:var(--text-dim);font-size:11px;">加载中...</span>
+  </div>
+
+  <div class="table-wrap">
+    <div class="loading-state" id="ls">
+      <div class="sp"></div>
+      <p>正在拉取期货行情数据</p>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">首次查询约需5-15秒 · 来源：新浪财经</p>
+    </div>
+    <div class="error-state" id="es" style="display:none;">
+      <p style="font-size:16px;color:var(--red);margin-bottom:6px;">⚠️ 数据获取失败</p>
+      <p style="font-size:12px;color:var(--text-dim);" id="emsg">无法连接到后端服务</p>
+      <button class="btn" style="margin-top:12px;" onclick="loadData()">重试</button>
+    </div>
+    <div class="table-scroll" id="tsc" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="onSort('name')">品种<span class="sa" id="s-name"></span></th>
+            <th>代码</th>
+            <th>交易所</th>
+            <th onclick="onSort('price')">最新价<span class="sa" id="s-price"></span></th>
+            <th onclick="onSort('changePct')">涨跌幅<span class="sa" id="s-changePct"></span></th>
+            <th onclick="onSort('spreadPct')">跨期价差<span class="sa" id="s-spreadPct"></span></th>
+            <th>升贴水</th>
+            <th>主力合约</th>
+            <th>次主力</th>
+            <th onclick="onSort('volume')">成交量<span class="sa" id="s-volume"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="legend">
+    <p>📌 <strong style="color:var(--green);">贴水 (Backwardation)</strong> = 远月合约价格 <strong>低于</strong> 近月合约 · 远月折价</p>
+    <p>📌 <strong style="color:var(--red);">升水 (Contango)</strong> = 远月合约价格 <strong>高于</strong> 近月合约 · 远月溢价</p>
+    <p>📌 <strong>跨期价差</strong> = (主力价格 - 次主力价格) / 次主力价格 × 100% · 正值 = 贴水(近月高)，负值 = 升水(远月高)</p>
+    <p>💡 点击品种行可查看完整合约链详情</p>
+    <p class="data-source" id="srcInfo"></p>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const hide = id => $(id).style.display = 'none';
+const show = id => $(id).style.display = '';
+
+let rawData = [];
+let filteredData = [];
+let sortKey = 'spreadPct';
+let sortDir = 'desc';
+
+async function loadData() {
+  hide('es');
+  show('ls');
+  $('udot').className = 'update-dot loading';
+  $('utext').textContent = '获取中...';
+  $('srcInfo').textContent = '';
+
+  try {
+    const res = await fetch('/api/futures-basis');
+    if (!res.ok) throw new Error(`HTTP错误: ${res.status}`);
+    const json = await res.json();
+
+    rawData = (json.data || []).slice();
+    renderStats(json);
+    applyFilter();
+
+    hide('ls');
+    show('tsc');
+    $('udot').className = 'update-dot';
+    $('utext').textContent = new Date().toLocaleString('zh-CN');
+    const bwCount = rawData.filter(r => r.isBackwardation).length;
+    $('srcInfo').textContent = `数据来源：新浪财经K线 · 共 ${json.total} 个品种 · 贴水 ${bwCount} 个 · ${json.updated}`;
+  } catch(e) {
+    console.error('加载失败:', e);
+    hide('ls');
+    show('es');
+    $('emsg').textContent = e.message || '连接失败';
+    $('udot').className = 'update-dot fail';
+    $('utext').textContent = '失败';
+  }
+}
+
+function renderStats(json) {
+  if (!rawData.length) {
+    $('sbar').innerHTML = '<span style="color:var(--text-dim);font-size:11px;">暂无数据</span>';
+    return;
+  }
+  const t = rawData.length;
+  const bw = rawData.filter(r => r.isBackwardation).length;
+  const ct = rawData.filter(r => r.spreadPct != null && !r.isBackwardation).length;
+  const na = rawData.filter(r => r.spreadPct == null).length;
+
+  $('sbar').innerHTML = `
+    <span>总数 <b>${t}</b></span>
+    <span class="pill backwardation">🟢 贴水 ${bw}</span>
+    <span class="pill contango">🔴 升水 ${ct}</span>
+    ${na > 0 ? `<span class="cc" style="font-size:10px;">${na} 个无跨期数据</span>` : ''}
+    <span style="color:var(--text-dim);font-size:11px;margin-left:auto;">${new Date().toLocaleTimeString()}</span>
+  `;
+}
+
+function renderTable(data) {
+  const tb = $('tb');
+  if (!data || !data.length) {
+    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-dim);">没有匹配的品种</td></tr>';
+    return;
+  }
+
+  const exchangeNames = { cffex: '中金所', shfe: '上期所', dce: '大商所', zce: '郑商所', ine: '能源中心' };
+
+  function fmtNum(v) {
+    if (v == null || v === 0) return '<span style="color:var(--text-muted)">-</span>';
+    if (v >= 100000) return (v / 10000).toFixed(0) + '万';
+    if (v >= 10000) return (v / 10000).toFixed(1) + '万';
+    if (v >= 1000) return (v / 1000).toFixed(1) + '千';
+    return v.toLocaleString();
+  }
+
+  tb.innerHTML = data.map(e => {
+    const isBw = e.isBackwardation;
+    const chgCls = e.changePct >= 0 ? 'pr' : 'pg';
+    const spCls = e.spreadPct != null ? (e.spreadPct > 0 ? 'pr' : 'pg') : '';
+    
+    // 价格格式化
+    const fmtPrice = (v) => {
+      if (v == null) return '<span style="color:var(--text-muted)">-</span>';
+      if (v >= 1000) return v.toFixed(v >= 10000 ? 0 : 2);
+      if (v >= 10) return v.toFixed(1);
+      return v.toFixed(2);
+    };
+
+    const spreadLabel = e.spreadPct != null 
+      ? `${e.spreadPct > 0 ? '+' : ''}${e.spreadPct.toFixed(2)}%`
+      : '-';
+
+    return `<tr class="${isBw ? 'backwardation-row' : ''}" style="cursor:pointer;" onclick="showDetail('${e.code}')" title="点击查看合约链详情">
+      <td style="max-width:130px;position:relative;">
+        <span style="font-weight:500;">${e.name}</span>
+      </td>
+      <td class="cc nm"><b>${e.code}</b></td>
+      <td><span class="cc">${exchangeNames[e.exchange] || e.exchange}</span></td>
+      <td class="nm" style="font-weight:600;">${fmtPrice(e.price)}</td>
+      <td class="nm ${chgCls}">${e.changePct >= 0 ? '+' : ''}${(e.changePct || 0).toFixed(2)}%</td>
+      <td class="nm ${spCls}">${spreadLabel}</td>
+      <td>
+        ${isBw ? '<span class="tag tag-bw">📉 贴水</span>' : (e.spreadPct != null ? '<span class="tag tag-ct">📈 升水</span>' : '<span class="cc" style="font-size:10px;">-</span>')}
+      </td>
+      <td style="font-size:11px;color:var(--text-dim);">${e.mainContract || '-'}</td>
+      <td style="font-size:11px;color:var(--text-dim);">${e.contract2Name || '-'}</td>
+      <td class="nm cc">${fmtNum(e.volume)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function applyFilter() {
+  const search = $('si').value.trim().toLowerCase();
+  const ftype = $('ff').value;
+  const fexch = $('sf').value;
+
+  let result = rawData.filter(e => {
+    if (search && !e.code.toLowerCase().includes(search) && !e.name.toLowerCase().includes(search)) return false;
+    if (ftype === 'backwardation' && !e.isBackwardation) return false;
+    if (ftype === 'contango' && e.isBackwardation) return false;
+    if (ftype === 'cffex' && e.exchange !== 'cffex') return false;
+    if (ftype === 'commodity' && e.exchange === 'cffex') return false;
+    if (fexch !== 'all' && e.exchange !== fexch) return false;
+    return true;
+  });
+
+  result.sort((a, b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    return va < vb ? (sortDir === 'asc' ? -1 : 1) : (va > vb ? (sortDir === 'asc' ? 1 : -1) : 0);
+  });
+
+  filteredData = result;
+  renderTable(result);
+  updateSortArrow();
+}
+
+function onFilter() { applyFilter(); }
+
+function onSort(key) {
+  if (sortKey === key) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey = key;
+    sortDir = 'desc';
+  }
+  applyFilter();
+}
+
+function updateSortArrow() {
+  document.querySelectorAll('.sa').forEach(el => el.textContent = '');
+  const el = $('s-' + sortKey);
+  if (el) el.textContent = sortDir === 'asc' ? '▲' : '▼';
+}
+
+function onReset() {
+  $('si').value = '';
+  $('ff').value = 'all';
+  $('sf').value = 'all';
+  sortKey = 'spreadPct';
+  sortDir = 'desc';
+  applyFilter();
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+loadData();
+setInterval(loadData, 120000);
+
+// ====== 品种详情弹窗 ======
+let detailOpen = false;
+
+function showDetail(code) {
+  if (detailOpen) return;
+  detailOpen = true;
+  
+  // 创建遮罩和弹窗
+  const overlay = document.createElement('div');
+  overlay.className = 'detail-overlay';
+  overlay.id = 'dtOverlay';
+  overlay.onclick = (e) => { if (e.target === overlay) closeDetail(); };
+  
+  overlay.innerHTML = `
+    <div class="detail-modal" id="dtModal">
+      <div class="dt-header">
+        <div>
+          <h2 id="dtTitle">${code} · 加载中...</h2>
+          <span id="dtMeta" class="cc" style="font-size:11px;"></span>
+        </div>
+        <button class="dt-close" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="dt-loading" id="dtLoading">
+        <div class="sp"></div>
+        <p>加载合约链数据...</p>
+      </div>
+      <div class="dt-content" id="dtContent" style="display:none;">
+        <div class="dt-summary" id="dtSummary"></div>
+        <div class="table-wrap" style="margin-top:12px;">
+          <table class="dt-table">
+            <thead>
+              <tr>
+                <th>合约</th>
+                <th>最新价</th>
+                <th>涨跌幅</th>
+                <th>基差</th>
+                <th>基差率</th>
+                <th>成交量</th>
+                <th>持仓量</th>
+                <th>日期</th>
+              </tr>
+            </thead>
+            <tbody id="dtTbody"></tbody>
+          </table>
+        </div>
+        <div class="dt-basis" id="dtBasis" style="margin-top:12px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  // 请求详情数据
+  fetch(`/api/futures-detail/${code}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok || !data.contracts || !data.contracts.length) {
+        $('dtTitle').textContent = `${code} · 无数据`;
+        hide('dtLoading');
+        show('dtContent');
+        $('dtContent').innerHTML = '<p style="text-align:center;padding:30px;color:var(--text-dim);">暂无此品种的合约数据</p>';
+        return;
+      }
+      
+      hide('dtLoading');
+      show('dtContent');
+      
+      $('dtTitle').textContent = `${data.name} (${data.code})`;
+      $('dtMeta').textContent = `${data.exchange} · ${data.unit}`;
+      
+      // 合约表格
+      const fmtP = (v) => {
+        if (v == null) return '-';
+        if (v >= 1000) return v.toFixed(v >= 10000 ? 0 : 2);
+        if (v >= 10) return v.toFixed(1);
+        return v.toFixed(2);
+      };
+      
+      $('dtTbody').innerHTML = data.contracts.map(c => `
+        <tr>
+          <td style="font-weight:500;">${c.month}</td>
+          <td class="nm" style="font-weight:600;">${fmtP(c.price)}</td>
+          <td class="nm ${c.change >= 0 ? 'pr' : 'pg'}">${c.change >= 0 ? '+' : ''}${c.change.toFixed(2)}%</td>
+          <td class="nm ${c.basis != null ? (c.basis >= 0 ? 'pr' : 'pg') : 'cc'}">${c.basis != null ? (c.basis >= 0 ? '+' : '') + fmtP(c.basis) : '-'}</td>
+          <td class="nm ${c.basisPct != null ? (c.basisPct >= 0 ? 'pr' : 'pg') : 'cc'}">${c.basisPct != null ? (c.basisPct >= 0 ? '+' : '') + c.basisPct.toFixed(2) + '%' : '-'}</td>
+          <td class="nm cc">${c.volume >= 10000 ? (c.volume/10000).toFixed(1) + '万' : c.volume.toLocaleString()}</td>
+          <td class="nm cc">${c.openInterest >= 10000 ? (c.openInterest/10000).toFixed(1) + '万' : (c.openInterest || 0).toLocaleString()}</td>
+          <td class="cc" style="font-size:11px;">${c.date || '-'}</td>
+        </tr>
+      `).join('');
+      
+      // 基差分析
+      const basisHtml = data.contracts.length >= 2 ? (() => {
+        const near = data.contracts[0];
+        const far = data.contracts[1];
+        const isCt = data.isContango;
+        const basisCls = isCt ? 'pr' : 'pg';
+        const label = isCt ? '升水 (Contango)' : '贴水 (Backwardation)';
+        const labelCls = isCt ? 'tag-ct' : 'tag-bw';
+        return `
+          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+            <span><span class="tag ${labelCls}" style="font-size:11px;">${label}</span></span>
+            <span>近月 <b>${near.month}</b> = <span class="nm">${fmtP(near.price)}</span></span>
+            <span>远月 <b>${far.month}</b> = <span class="nm">${fmtP(far.price)}</span></span>
+            <span>基差 = <span class="nm ${basisCls}">${data.basis >= 0 ? '+' : ''}${fmtP(data.basis)}</span></span>
+            <span>基差率 = <span class="nm ${basisCls}">${data.basisPct >= 0 ? '+' : ''}${data.basisPct.toFixed(2)}%</span></span>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:var(--text-dim);">
+            ${isCt ? '远月合约价格高于近月，呈升水结构（Contango），远期看多' : '远月合约价格低于近月，呈贴水结构（Backwardation），远期看空'}
+          </div>
+        `;
+      })() : '<p style="color:var(--text-dim);">仅获取到一个合约数据，无法计算跨期基差</p>';
+      
+      $('dtBasis').innerHTML = basisHtml;
+    })
+    .catch(e => {
+      hide('dtLoading');
+      show('dtContent');
+      $('dtTitle').textContent = `${code} · 查询失败`;
+      $('dtContent').innerHTML = `<p style="text-align:center;padding:30px;color:var(--red);">查询失败: ${e.message}</p>`;
+    });
+}
+
+function closeDetail() {
+  const ov = document.getElementById('dtOverlay');
+  if (ov) ov.remove();
+  detailOpen = false;
+}
+</script>
+
+<!-- 详情弹窗样式 -->
+<style>
+  .detail-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.65); z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .detail-modal {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+    width: 90%; max-width: 900px; max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .dt-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 1;
+  }
+  .dt-header h2 { font-size: 18px; font-weight: 600; }
+  .dt-close {
+    background: var(--card); border: 1px solid var(--border); color: var(--text-dim);
+    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all .2s; flex-shrink: 0;
+  }
+  .dt-close:hover { background: var(--card-hover); color: var(--text); }
+  .dt-loading { text-align: center; padding: 40px; color: var(--text-dim); }
+  .dt-loading .sp { width: 24px; height: 24px; }
+  .dt-content { padding: 12px 20px 20px; }
+  .dt-table th:first-child, .dt-table td:first-child { text-align: left; padding-left: 12px; }
+  .dt-summary { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+  @media (max-width: 600px) {
+    .detail-modal { width: 96%; }
+    .dt-content { padding: 10px 14px 16px; }
+  }
+</style>
+
+</body>
+</html>

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猪猪基金 · 股东薅羊毛</title>
+<style>
+  :root {
+    --bg: #0f1219;
+    --card: #181d29;
+    --card-hover: #1e2538;
+    --border: #262e3f;
+    --text: #e2e8f0;
+    --text-dim: #7b8499;
+    --text-muted: #4a5568;
+    --accent: #4f7eff;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --warning: #f97316;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #141a2a 0%, #1a2140 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 14px;
+  }
+  .header-inner {
+    max-width: 1500px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); flex-shrink: 0; }
+  .header-title { line-height: 1.3; }
+  .header-title h1 { font-size: 22px; font-weight: 700; }
+  .header-title h1 .accent { background: linear-gradient(135deg,#f59e0b,#ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header-title .sub { color: var(--text-dim); font-size: 11px; }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .update-time { color: var(--text-dim); font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  .update-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .update-dot.loading { background: var(--accent); animation: blink .6s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .update-dot.fail { background: var(--red); }
+  .main { max-width: 1500px; margin: 0 auto; padding: 14px 24px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .toolbar .search-wrap { position: relative; flex: 1; min-width: 160px; max-width: 260px; }
+  .toolbar .search-wrap input {
+    width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px 8px 30px; color: var(--text); font-size: 13px; outline: none;
+  }
+  .toolbar .search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,126,255,0.15); }
+  .toolbar .search-wrap .icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+  .toolbar select {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 26px 8px 10px; color: var(--text); font-size: 12px; outline: none;
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%237b8499' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+  }
+  .toolbar select:focus { border-color: var(--accent); }
+  .btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: all .2s; white-space: nowrap; text-decoration: none;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+  .btn-back { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .stats-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    font-size: 12px; margin-bottom: 12px; padding: 8px 14px;
+    background: var(--card); border-radius: 8px; border: 1px solid var(--border);
+  }
+  .stats-bar .sv { font-weight: 600; }
+  .stats-bar .pill {
+    display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 500;
+  }
+  .stats-bar .pill.ongoing { background: rgba(34,197,94,0.12); color: var(--green); }
+  .stats-bar .pill.ended { background: rgba(239,68,68,0.1); color: var(--red); }
+  .stats-bar .pill.upcoming { background: rgba(245,158,11,0.12); color: var(--orange); }
+  .loading-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+  .loading-state .sp {
+    width: 30px; height: 30px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    margin: 0 auto 12px; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .cards { display: grid; gap: 10px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; transition: all .2s;
+  }
+  .card:hover { border-color: rgba(79,126,255,0.3); background: var(--card-hover); }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-subtitle { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .card-body { margin-top: 8px; }
+  .card-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .card-meta-item { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 3px; }
+  .card-meta-item strong { color: var(--text); }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .status-badge.ongoing { background: rgba(34,197,94,0.15); color: var(--green); }
+  .status-badge.ended { background: rgba(239,68,68,0.12); color: var(--red); }
+  .status-badge.upcoming { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .stock-info { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .stock-info .price { font-size: 14px; font-weight: 600; font-family: "SF Mono", "Monaco", monospace; }
+  .stock-info .change.up { color: var(--red); } .stock-info .change.down { color: var(--green); }
+  .stock-info .code-tag {
+    font-size: 11px; padding: 1px 6px; border-radius: 3px;
+    background: rgba(79,126,255,0.1); color: var(--accent); font-family: monospace;
+  }
+  .progress-bar {
+    width: 100%; height: 4px; background: #252b3e; border-radius: 2px; overflow: hidden; margin-top: 10px;
+  }
+  .progress-bar .fill {
+    height: 100%; border-radius: 2px; transition: width .5s;
+  }
+  .progress-bar .fill.ongoing { background: linear-gradient(90deg, var(--green), var(--orange)); }
+  .progress-bar .fill.ended { background: var(--red); }
+  .progress-bar .fill.upcoming { background: var(--orange); }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+  .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+  .legend {
+    margin-top: 14px; font-size: 11px; color: var(--text-dim); line-height: 1.8;
+    padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  }
+  @media (max-width: 768px) {
+    .header { padding: 12px 14px 10px; }
+    .header h1 { font-size: 18px; }
+    .main { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <img src="logo.jpg" class="logo-avatar" alt="猪猪">
+      <div class="header-title">
+        <h1><span class="accent">🎁 股东薅羊毛</span></h1>
+        <div class="sub">上市公司股东回馈 · 持股就有福利</div>
+      </div>
+    </div>
+    <div class="header-right" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span class="update-time" style="font-size:11px;">
+        <span class="update-dot" id="udot"></span>
+        <span id="utext">加载中...</span>
+      </span>
+      <button class="btn" onclick="location.href='/'" style="font-size:11px;padding:6px 10px;">📊 基金折溢价</button>
+      <button class="btn" onclick="location.href='futures.html'" style="font-size:11px;padding:6px 10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);">📈 期货基差</button>
+      <button class="btn" onclick="location.href='perks.html'" style="font-size:11px;padding:6px 10px;background:linear-gradient(135deg,#f59e0b,#ef4444);">🎁 股东薅羊毛</button>
+      <button class="btn" id="refreshBtn" style="font-size:11px;padding:6px 10px;">🔄 刷新</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="si" placeholder="搜股票代码/名称/福利..." oninput="onFilter()" autocomplete="off">
+    </div>
+    <select id="ff" onchange="onFilter()">
+      <option value="all">全部状态</option>
+      <option value="ongoing">🟢 进行中</option>
+      <option value="upcoming">🟡 即将开始</option>
+      <option value="ended">🔴 已结束</option>
+    </select>
+    <select id="sf" onchange="onFilter()">
+      <option value="all">最低持股：不限</option>
+      <option value="100">≤ 100股</option>
+      <option value="500">≤ 500股</option>
+      <option value="1000">≤ 1000股</option>
+    </select>
+    <button class="btn btn-secondary" onclick="onReset()">重置</button>
+    <a href="https://www.cninfo.com.cn/new/fulltextSearch?notautosubmit=&keyWord=股东回馈活动" target="_blank" class="btn btn-secondary" style="background:transparent;border:1px solid var(--accent);color:var(--accent);">🔍 巨潮公告</a>
+    <select id="sf2" onchange="onFilter()">
+      <option value="all">全部来源</option>
+      <option value="manual">手动录入</option>
+      <option value="cninfo">巨潮公告</option>
+    </select>
+  </div>
+
+  <div class="stats-bar" id="sbar">
+    <span style="color:var(--text-dim);font-size:11px;">等待数据...</span>
+  </div>
+
+  <div class="loading-state" id="ls">
+    <div class="sp"></div>
+    <p>正在加载股东回馈数据...</p>
+  </div>
+
+  <div class="cards" id="cards" style="display:none;"></div>
+
+  <!-- 内联编辑区 -->
+  <div id="admin-tools" style="margin-top:14px;border:1px dashed var(--border);border-radius:8px;padding:14px;display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-size:13px;font-weight:600;">🛠️ 数据管理</span>
+      <span style="font-size:10px;color:var(--text-muted);cursor:pointer;" onclick="document.getElementById('admin-tools').style.display='none'">关闭</span>
+    </div>
+    <div style="margin-bottom:8px;">
+      <span style="font-size:11px;color:var(--text-dim);">添加/编辑股东回馈记录（JSON格式编辑后保存）</span>
+    </div>
+    <textarea id="edit-area" rows="10" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:monospace;padding:8px;outline:none;resize:vertical;"></textarea>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="btn" onclick="savePerksEdit()" style="font-size:12px;">💾 保存</button>
+      <button class="btn btn-secondary" onclick="loadPerksEdit()" style="font-size:12px;">🔄 加载当前数据</button>
+      <span id="edit-msg" style="font-size:11px;color:var(--text-dim);align-self:center;"></span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <p>📌 数据来源：<a href="https://www.cninfo.com.cn/new/fulltextSearch?notautosubmit=&keyWord=股东回馈活动" target="_blank" style="color:var(--accent);">巨潮资讯网公告搜索「股东回馈活动」</a>（证监会指定披露平台） + 人工整理</p>
+    <p>📌 <strong>进行中</strong> — 当前可参与 · <strong>即将开始</strong> — 尚未开始 · <strong>已结束</strong> — 无法参与</p>
+    <p>💡 持有足够数量的股票即可按公告要求领取福利，部分公司需在股权登记日持有</p>
+    <p style="margin-top:6px;"><span style="color:var(--text-muted);font-size:10px;cursor:pointer;" onclick="toggleAdminTools()">🔧 管理员入口</span></p>
+  </div>
+</div>
+
+<script>
+let allPerks = [];
+let allQuotes = {};
+
+const $ = id => document.getElementById(id);
+const hide = id => $(id).style.display = 'none';
+const show = id => $(id).style.display = '';
+
+async function loadData() {
+  hide('cards');
+  show('ls');
+  $('udot').className = 'update-dot loading';
+  $('utext').textContent = '加载中...';
+
+  const filter = $('ff').value;
+  const search = $('si').value.trim();
+  let url = `/api/perks?filter=${filter}&search=${encodeURIComponent(search)}`;
+  const sourceFilter = $('sf2').value;
+  if (sourceFilter !== 'all') url += `&filter=${sourceFilter}`;
+
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    allPerks = json.perks || [];
+    allQuotes = json.quotes || {};
+
+    renderStats();
+    renderCards();
+
+    hide('ls');
+    show('cards');
+    $('udot').className = 'update-dot';
+    $('utext').textContent = new Date().toLocaleString('zh-CN');
+  } catch(e) {
+    console.error('加载失败:', e);
+    hide('ls');
+    $('cards').style.display = '';
+    $('cards').innerHTML = `<div class="empty-state"><div class="big">⚠️</div><p>数据加载失败</p><button class="btn" style="margin-top:12px;" onclick="loadData()">重试</button></div>`;
+    $('udot').className = 'update-dot fail';
+    $('utext').textContent = '失败';
+  }
+}
+
+function renderStats() {
+  if (!allPerks.length) {
+    $('sbar').innerHTML = '<span style="color:var(--text-dim);font-size:11px;">暂无数据</span>';
+    return;
+  }
+  const t = allPerks.length;
+  const ongoing = allPerks.filter(p => p.status === 'ongoing').length;
+  const ended = allPerks.filter(p => p.status === 'ended').length;
+  const upcoming = allPerks.filter(p => p.status === 'upcoming').length;
+
+  $('sbar').innerHTML = `
+    <span>总数 <b>${t}</b></span>
+    <span class="pill ongoing">🟢 进行中 ${ongoing}</span>
+    <span class="pill upcoming">🟡 即将 ${upcoming}</span>
+    <span class="pill ended">🔴 已结束 ${ended}</span>
+    <span style="color:var(--text-dim);font-size:11px;margin-left:auto;">${new Date().toLocaleDateString('zh-CN')}</span>
+  `;
+}
+
+function progressPercent(perk) {
+  const start = new Date(perk.startDate).getTime();
+  const end = new Date(perk.endDate).getTime();
+  const now = Date.now();
+  if (now < start) return 0;
+  if (now > end) return 100;
+  return Math.round((now - start) / (end - start) * 100);
+}
+
+function statusText(perk) {
+  switch (perk.status) {
+    case 'ongoing': return '🟢 进行中';
+    case 'ended': return '🔴 已结束';
+    case 'upcoming': return '🟡 即将开始';
+    default: return perk.status;
+  }
+}
+
+function daysLeft(perk) {
+  const today = new Date();
+  const end = new Date(perk.endDate);
+  const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  if (diff > 0) return `${diff}天后结束`;
+  if (diff === 0) return '今天最后一天';
+  return '已结束';
+}
+
+function renderCards() {
+  const el = $('cards');
+  
+  // 应用持股数量筛选
+  const shareFilter = $('sf').value;
+  let data = allPerks;
+  if (shareFilter !== 'all') {
+    const maxShares = parseInt(shareFilter);
+    data = data.filter(p => p.minShares <= maxShares);
+  }
+  
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-state"><div class="big">🎁</div><p>暂无匹配的股东回馈</p><span style="font-size:12px;">试试调整筛选条件或搜索其他关键词</span></div>`;
+    return;
+  }
+
+  el.innerHTML = data.map(perk => {
+    const quote = allQuotes[perk.code];
+    const priceHtml = quote && quote.price
+      ? `<div class="stock-info">
+          <span class="code-tag">${perk.code}</span>
+          <span class="price">${quote.price.toFixed(2)}</span>
+          <span class="change ${quote.changePct >= 0 ? 'up' : 'down'}">${quote.changePct >= 0 ? '+' : ''}${(quote.changePct || 0).toFixed(2)}%</span>
+        </div>`
+      : `<div class="stock-info"><span class="code-tag">${perk.code}</span></div>`;
+    
+    const prog = progressPercent(perk);
+    
+    if (perk._fromCninfo) {
+      // ==== 巨潮来源：精简卡片 ====
+      // 状态：只知道有公告，没有具体福利日期
+      const bg = perk._fromCninfo
+        ? `<span class="status-badge cninfo">📄 巨潮</span>`
+        : '';
+      return `<div class="card" style="min-height:0;">
+        <div class="card-header">
+          <div>
+            <a href="${perk.sourceUrl}" target="_blank" class="card-title" style="color:var(--accent);text-decoration:none;font-size:16px;">${perk.name} ↗</a>
+            <div class="card-subtitle">${perk.code}</div>
+          </div>
+          ${bg}
+        </div>
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:var(--text-dim);font-size:11px;">📅 ${perk.startDate}</span>
+            <span style="font-size:10px;color:var(--accent);">查看PDF原文 →</span>
+          </div>
+          ${priceHtml}
+        </div>
+      </div>`;
+    }
+    
+    // ==== 手动来源：信息完整的卡片 ====
+    const isShareEasy = perk.minShares <= 500;
+    return `<div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" style="font-size:15px;">${perk.perkName}</div>
+          <div class="card-subtitle">${perk.name}（${perk.code}） <span style="font-size:10px;color:var(--text-muted);">📝 人工整理</span></div>
+        </div>
+        <span class="status-badge ${perk.status}">${statusText(perk)}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-desc">${perk.description}</div>
+        <div class="card-meta">
+          <span class="card-meta-item">📅 ${perk.startDate || '待定'} ${perk.endDate ? `~ ${perk.endDate}` : ''}</span>
+          <span class="card-meta-item">⏳ <strong>${daysLeft(perk)}</strong></span>
+          <span class="card-meta-item" style="color:${isShareEasy ? 'var(--green)' : 'var(--orange)'};">📊 最低 <strong>${perk.minShares}股</strong> ${isShareEasy ? '✅友好' : ''}</span>
+          ${perk.benefit ? `<span class="card-meta-item">🎯 ${perk.benefit}</span>` : ''}
+        </div>
+        <div class="progress-bar">
+          <div class="fill ${perk.status}" style="width:${prog}%"></div>
+        </div>
+        ${priceHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onFilter() { loadData(); }
+function onReset() {
+  $('si').value = '';
+  $('ff').value = 'all';
+  $('sf').value = 'all';
+  $('sf2').value = 'all';
+  loadData();
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+loadData();
+setInterval(loadData, 60000);
+
+// ====== 管理员工具 ======
+function toggleAdminTools() {
+  const el = document.getElementById('admin-tools');
+  if (el.style.display === 'none' || el.style.display === '') {
+    el.style.display = 'block';
+    loadPerksEdit();
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function loadPerksEdit() {
+  const area = document.getElementById('edit-area');
+  area.value = JSON.stringify(allPerks, null, 2);
+  document.getElementById('edit-msg').textContent = '已加载当前数据，可编辑后保存';
+}
+
+function showEditMsg(text, isErr) {
+  const el = document.getElementById('edit-msg');
+  el.textContent = text;
+  el.style.color = isErr ? 'var(--red)' : 'var(--green)';
+  setTimeout(() => { el.style.color = 'var(--text-dim)'; }, 3000);
+}
+
+async function savePerksEdit() {
+  const area = document.getElementById('edit-area');
+  let newData;
+  try {
+    newData = JSON.parse(area.value);
+    if (!Array.isArray(newData)) throw new Error('必须是数组格式');
+  } catch(e) {
+    showEditMsg('JSON格式错误: ' + e.message, true);
+    return;
+  }
+  
+  try {
+    const res = await fetch('/api/perks/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ perks: newData })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      showEditMsg(`✅ 保存成功！共 ${json.count} 条记录`);
+      setTimeout(loadData, 1000);
+    } else {
+      showEditMsg('保存失败: ' + (json.error || '未知错误'), true);
+    }
+  } catch(e) {
+    showEditMsg('保存失败: ' + e.message, true);
+  }
+}
+</script>
+</body>
+</html>

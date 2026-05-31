@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猪猪基金 · 房地产走势</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --bg: #0f1219;
+    --card: #181d29;
+    --card-hover: #1e2538;
+    --border: #262e3f;
+    --text: #e2e8f0;
+    --text-dim: #7b8499;
+    --text-muted: #4a5568;
+    --accent: #4f7eff;
+    --accent-dim: rgba(79,126,255,0.15);
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --warning: #f97316;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #141a2a 0%, #1a2140 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 14px;
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); flex-shrink: 0; }
+  .header-title { line-height: 1.3; }
+  .header-title h1 { font-size: 22px; font-weight: 700; }
+  .header-title h1 .accent { color: var(--accent); }
+  .header-title h1 .light { font-weight: 300; color: var(--text-dim); }
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit;
+    transition: all .15s; white-space: nowrap;
+  }
+  .btn:hover { background: var(--card-hover); border-color: var(--accent); }
+  .update-time { color: var(--text-dim); font-size: 12px; display: flex; align-items: center; gap: 5px; }
+
+  .main { max-width: 1200px; margin: 0 auto; padding: 20px 24px; }
+
+  .city-selector {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px;
+  }
+  .city-selector label { color: var(--text-dim); font-size: 13px; }
+  .city-selector select, .city-selector input {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit;
+  }
+  .city-selector select:focus, .city-selector input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .city-selector select option { background: var(--card); color: var(--text); }
+  .city-selector .btn {
+    padding: 8px 18px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+    border: none; font-weight: 500;
+  }
+  .city-selector .btn:hover { opacity: 0.9; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; text-align: center;
+  }
+  .card .label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+  .card .value { font-size: 24px; font-weight: 700; }
+  .card .change { font-size: 13px; font-weight: 500; margin-top: 2px; }
+  .card .unit { font-size: 14px; color: var(--text-dim); font-weight: 400; }
+  .up { color: var(--red); }
+  .down { color: var(--green); }
+
+  .chart-wrap {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 20px;
+  }
+  .chart-wrap .chart-title {
+    font-size: 15px; font-weight: 600; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .chart-wrap .chart-title .hint { font-size: 12px; color: var(--text-dim); font-weight: 400; }
+  .chart-wrap canvas { max-height: 420px; }
+
+  .chart-type-tabs {
+    display: flex; gap: 4px; margin-bottom: 16px;
+  }
+  .chart-type-tabs .tab {
+    padding: 6px 16px; border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; font-size: 12px; color: var(--text-dim); background: transparent;
+    transition: all .15s;
+  }
+  .chart-type-tabs .tab:hover { border-color: var(--accent); color: var(--text); }
+  .chart-type-tabs .tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  .data-table-wrap {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-bottom: 20px; max-height: 400px; overflow-y: auto;
+  }
+  .data-table-wrap::-webkit-scrollbar { width: 6px; }
+  .data-table-wrap::-webkit-scrollbar-track { background: transparent; }
+  .data-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .data-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .data-table th {
+    text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border);
+    color: var(--text-dim); font-weight: 500; position: sticky; top: 0;
+    background: var(--card);
+  }
+  .data-table td { padding: 6px 12px; border-bottom: 1px solid rgba(38,46,63,0.5); }
+  .data-table tr:hover td { background: var(--card-hover); }
+
+  .empty-state {
+    text-align: center; padding: 80px 20px; color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  .loading { text-align: center; padding: 40px; color: var(--text-dim); font-size: 14px; }
+  .error-msg { color: var(--red); font-size: 13px; padding: 12px; background: rgba(239,68,68,0.1); border-radius: 8px; margin-bottom: 12px; }
+
+  @media (max-width: 640px) {
+    .header-inner { flex-direction: column; align-items: flex-start; }
+    .city-selector { flex-direction: column; align-items: stretch; }
+    .cards { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <img src="logo.jpg" class="logo-avatar" alt="logo" onerror="this.style.display='none'">
+      <div class="header-title">
+        <h1><span class="accent">猪猪基金</span><span class="light"> 房地产走势</span></h1>
+        <div style="font-size:11px;color:var(--text-dim);">城市房价历史走势 · 数据仅供参考</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="update-time" style="font-size:11px;">
+        <span class="update-dot" id="udot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);"></span>
+        <span id="utext">加载中...</span>
+      </span>
+      <button class="btn" onclick="location.href='/'" style="font-size:11px;padding:6px 10px;">📊 基金折溢价</button>
+      <button class="btn" onclick="location.href='futures.html'" style="font-size:11px;padding:6px 10px;">📈 期货基差</button>
+      <a href="perks.html" class="btn" style="text-decoration:none;font-size:11px;padding:6px 10px;">🎁 股东薅羊毛</a>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="city-selector">
+    <label for="citySelect">🌆 选择城市</label>
+    <select id="citySelect">
+      <option value="shanghai">上海</option>
+      <option value="suzhou" selected>苏州</option>
+      <option value="beijing">北京</option>
+      <option value="shenzhen">深圳</option>
+      <option value="guangzhou">广州</option>
+      <option value="hangzhou">杭州</option>
+      <option value="nanjing">南京</option>
+      <option value="chengdu">成都</option>
+      <option value="wuhan">武汉</option>
+      <option value="chongqing">重庆</option>
+      <option value="tianjin">天津</option>
+      <option value="xiamen">厦门</option>
+      <option value="ningbo">宁波</option>
+      <option value="qingdao">青岛</option>
+      <option value="suzhou">苏州  </option>
+      <option value="wuxi">无锡</option>
+      <option value="changsha">长沙</option>
+      <option value="zhengzhou">郑州</option>
+      <option value="xian">西安  </option>
+      <option value="hefei">合肥</option>
+    </select>
+    <button class="btn" onclick="loadData()">📊 查询</button>
+  </div>
+
+  <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+  <div class="chart-type-tabs">
+    <span class="tab active" data-type="price" onclick="switchType(this,'price')">🏠 均价走势</span>
+    <span class="tab" data-type="mom" onclick="switchType(this,'mom')">📈 环比涨跌</span>
+    <span class="tab" data-type="yoy" onclick="switchType(this,'yoy')">📊 同比涨跌</span>
+  </div>
+
+  <div class="cards" id="infoCards">
+    <div class="card"><div class="label">最新均价</div><div class="value" id="latestPrice">--</div><div class="change" id="latestChange"></div></div>
+    <div class="card"><div class="label">近一月</div><div class="value" id="monthlyChange" style="font-size:20px;">--</div></div>
+    <div class="card"><div class="label">近一年</div><div class="value" id="yearlyChange" style="font-size:20px;">--</div></div>
+    <div class="card"><div class="label">近五年</div><div class="value" id="fiveYearChange" style="font-size:20px;">--</div></div>
+    <div class="card"><div class="label">历史最高</div><div class="value" id="highPrice">--</div><div class="change" id="highDate" style="font-size:11px;color:var(--text-dim);"></div></div>
+    <div class="card"><div class="label">历史最低</div><div class="value" id="lowPrice">--</div><div class="change" id="lowDate" style="font-size:11px;color:var(--text-dim);"></div></div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">
+      <span id="chartTitle">苏州二手房均价走势</span>
+      <span class="hint">数据来源：中国房价行情网</span>
+    </div>
+    <canvas id="priceChart"></canvas>
+  </div>
+
+  <div class="data-table-wrap" id="dataTableWrap">
+    <table class="data-table">
+      <thead><tr>
+        <th>月份</th>
+        <th>均价 (元/㎡)</th>
+        <th>环比</th>
+        <th>同比</th>
+      </tr></thead>
+      <tbody id="dataTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let chart = null;
+let currentType = 'price';
+let currentData = null;
+const CITY_NAMES = {
+  shanghai:'上海', suzhou:'苏州', beijing:'北京', shenzhen:'深圳',
+  guangzhou:'广州', hangzhou:'杭州', nanjing:'南京', chengdu:'成都',
+  wuhan:'武汉', chongqing:'重庆', tianjin:'天津', xiamen:'厦门',
+  ningbo:'宁波', qingdao:'青岛', wuxi:'无锡', changsha:'长沙',
+  zhengzhou:'郑州', xian:'西安', hefei:'合肥'
+};
+const CITY_EN = { shanghai:'sh', suzhou:'suzhou', beijing:'bj', shenzhen:'sz',
+  guangzhou:'gz', hangzhou:'hz', nanjing:'nj', chengdu:'cd',
+  wuhan:'wh', chongqing:'cq', tianjin:'tj', xiamen:'xm',
+  ningbo:'nb', qingdao:'qd', wuxi:'wx', changsha:'cs',
+  zhengzhou:'zz', xian:'xa', hefei:'hf' };
+
+function $(id) { return document.getElementById(id); }
+
+async function loadData() {
+  const city = $('citySelect').value;
+  const cityName = CITY_NAMES[city] || city;
+  showLoading();
+  try {
+    const resp = await fetch(`/api/house-prices?city=${city}`);
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || '获取数据失败');
+    currentData = data;
+    renderData(data);
+    updateTime(data.fetchTime);
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+function renderData(data) {
+  const cityName = CITY_NAMES[data.city] || data.city;
+  const prices = data.prices;
+  if (!prices || prices.length === 0) {
+    showError('暂无该城市房价数据');
+    return;
+  }
+
+  // 最新数据
+  const latest = prices[prices.length - 1];
+  const prev = prices.length > 1 ? prices[prices.length - 2] : null;
+
+  // 计算变化
+  const latestChange = prev && prev.price > 0
+    ? ((latest.price - prev.price) / prev.price * 100).toFixed(2) + '%'
+    : '--';
+  const latestChangeClass = prev && latest.price >= prev.price ? 'up' : 'down';
+
+  $('latestPrice').textContent = latest.price.toLocaleString();
+  $('latestPrice').className = 'value';
+  if (latestChange !== '--') {
+    $('latestChange').textContent = latestChange;
+    $('latestChange').className = `change ${latestChangeClass}`;
+  } else {
+    $('latestChange').textContent = '';
+  }
+
+  // 近一月
+  const idxM1 = prices.length - 2;
+  if (idxM1 >= 0) {
+    const chg = ((latest.price - prices[idxM1].price) / prices[idxM1].price * 100).toFixed(2);
+    $('monthlyChange').textContent = (chg >= 0 ? '+' : '') + chg + '%';
+    $('monthlyChange').className = `value ${chg >= 0 ? 'up' : 'down'}`;
+  }
+
+  // 近一年 (12个月)
+  const idxY1 = prices.length - 13;
+  if (idxY1 >= 0) {
+    const chg = ((latest.price - prices[idxY1].price) / prices[idxY1].price * 100).toFixed(2);
+    $('yearlyChange').textContent = (chg >= 0 ? '+' : '') + chg + '%';
+    $('yearlyChange').className = `value ${chg >= 0 ? 'up' : 'down'}`;
+  }
+
+  // 近五年 (60个月)
+  const idxY5 = prices.length - 61;
+  if (idxY5 >= 0) {
+    const chg = ((latest.price - prices[idxY5].price) / prices[idxY5].price * 100).toFixed(2);
+    $('fiveYearChange').textContent = (chg >= 0 ? '+' : '') + chg + '%';
+    $('fiveYearChange').className = `value ${chg >= 0 ? 'up' : 'down'}`;
+  }
+
+  // 历史最高/最低
+  let maxP = prices[0], minP = prices[0];
+  for (const p of prices) {
+    if (p.price > maxP.price) maxP = p;
+    if (p.price < minP.price) minP = p;
+  }
+  $('highPrice').textContent = maxP.price.toLocaleString();
+  $('highDate').textContent = maxP.month;
+  $('lowPrice').textContent = minP.price.toLocaleString();
+  $('lowDate').textContent = minP.month;
+
+  // 图表
+  updateChart(prices, cityName);
+  // 表格
+  updateTable(prices, cityName);
+}
+
+function updateChart(prices, cityName) {
+  const labels = prices.map(p => p.month);
+  const values = prices.map(p => p.price);
+  const mom = prices.map(p => p.mom != null ? p.mom : null);  // 环比
+  const yoy = prices.map(p => p.yoy != null ? p.yoy : null);  // 同比
+
+  const ctx = $('priceChart').getContext('2d');
+
+  if (chart) chart.destroy();
+
+  let datasets, title;
+
+  if (currentType === 'price') {
+    title = `${cityName}二手房均价走势`;
+    datasets = [{
+      label: '均价 (元/㎡)',
+      data: values,
+      borderColor: '#4f7eff',
+      backgroundColor: 'rgba(79,126,255,0.1)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 1,
+      pointHitRadius: 8,
+      borderWidth: 2,
+    }];
+  } else if (currentType === 'mom') {
+    title = `${cityName}二手房均价 · 环比涨跌`;
+    datasets = [{
+      label: '环比 (%)',
+      data: mom,
+      borderColor: '#f59e0b',
+      backgroundColor: 'rgba(245,158,11,0.1)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 1,
+      pointHitRadius: 8,
+      borderWidth: 2,
+    }];
+  } else {
+    title = `${cityName}二手房均价 · 同比涨跌`;
+    datasets = [{
+      label: '同比 (%)',
+      data: yoy,
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.1)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 1,
+      pointHitRadius: 8,
+      borderWidth: 2,
+    }];
+  }
+
+  $('chartTitle').textContent = title;
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e2538',
+          titleColor: '#e2e8f0',
+          bodyColor: '#e2e8f0',
+          borderColor: '#262e3f',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 10,
+          callbacks: {
+            label: function(ctx) {
+              const val = ctx.raw;
+              if (currentType === 'price') return `均价: ${val.toLocaleString()} 元/㎡`;
+              return `${(val >= 0 ? '+' : '')}${val.toFixed(2)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#4a5568', maxTicksLimit: 20, font: { size: 10 } },
+          grid: { color: 'rgba(38,46,63,0.3)' }
+        },
+        y: {
+          ticks: {
+            color: '#4a5568',
+            font: { size: 11 },
+            callback: function(val) {
+              if (currentType === 'price') return val.toLocaleString();
+              return val.toFixed(1) + '%';
+            }
+          },
+          grid: { color: 'rgba(38,46,63,0.3)' }
+        }
+      },
+      interaction: { mode: 'index', intersect: false },
+    }
+  });
+}
+
+function updateTable(prices) {
+  const tbody = $('dataTableBody');
+  tbody.innerHTML = prices.map(p => {
+    const momStr = p.mom != null ? `<span class="${p.mom >= 0 ? 'up' : 'down'}">${(p.mom >= 0 ? '+' : '')}${p.mom.toFixed(2)}%</span>` : '<span style="color:var(--text-muted)">-</span>';
+    const yoyStr = p.yoy != null ? `<span class="${p.yoy >= 0 ? 'up' : 'down'}">${(p.yoy >= 0 ? '+' : '')}${p.yoy.toFixed(2)}%</span>` : '<span style="color:var(--text-muted)">-</span>';
+    return `<tr><td>${p.month}</td><td style="font-weight:600;">${p.price.toLocaleString()}</td><td>${momStr}</td><td>${yoyStr}</td></tr>`;
+  }).reverse().join('');
+}
+
+function switchType(el, type) {
+  document.querySelectorAll('.chart-type-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentType = type;
+  if (currentData && currentData.prices) {
+    const cityName = CITY_NAMES[currentData.city] || currentData.city;
+    updateChart(currentData.prices, cityName);
+  }
+}
+
+function showLoading() {
+  $('errorMsg').style.display = 'none';
+  $('latestPrice').textContent = '加载中...';
+  $('latestPrice').className = 'value';
+  $('latestChange').textContent = '';
+  $('monthlyChange').textContent = '--';
+  $('monthlyChange').className = 'value';
+  $('yearlyChange').textContent = '--';
+  $('yearlyChange').className = 'value';
+  $('fiveYearChange').textContent = '--';
+  $('fiveYearChange').className = 'value';
+}
+
+function showError(msg) {
+  const el = $('errorMsg');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+  $('latestPrice').textContent = '--';
+}
+
+function updateTime(t) {
+  if (t) {
+    $('utext').textContent = t;
+  }
+}
+
+// 初始加载
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  // 回车查询
+  $('citySelect').addEventListener('change', loadData);
+});
+</script>
+</body>
+</html>

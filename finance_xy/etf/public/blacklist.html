@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猪猪基金 - 黑名单股票池</title>
+<style>
+  :root {
+    --bg: #0f1219;
+    --card: #181d29;
+    --card-hover: #1e2538;
+    --border: #262e3f;
+    --text: #e2e8f0;
+    --text-dim: #7b8499;
+    --text-muted: #4a5568;
+    --accent: #4f7eff;
+    --accent-dim: rgba(79,126,255,0.15);
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --warning: #f97316;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #141a2a 0%, #1a2140 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 14px;
+  }
+  .header-inner {
+    max-width: 1500px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); flex-shrink: 0; }
+  .header-title { line-height: 1.3; }
+  .header-title h1 { font-size: 22px; font-weight: 700; }
+  .header-title h1 .accent { color: var(--accent); }
+  .header-title h1 .light { font-weight: 300; color: var(--text-dim); }
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; cursor: pointer; font-size: 12px; font-weight: 500;
+    transition: all .2s; white-space: nowrap; text-decoration: none; display: inline-block;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .main { max-width: 1200px; margin: 0 auto; padding: 14px 24px; }
+  .stocks-count {
+    font-size: 13px; color: var(--text-dim); margin-bottom: 12px;
+    padding: 10px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .stocks-count .num { font-size: 22px; font-weight: 700; color: var(--orange); }
+  .search-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .search-bar input {
+    flex: 1; min-width: 200px; background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; color: var(--text); font-size: 13px; outline: none;
+  }
+  .search-bar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .search-hint { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+  .table-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--card); }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+  th {
+    background: #1a2035; padding: 9px 8px; text-align: left; font-weight: 600;
+    border-bottom: 1px solid var(--border); color: var(--text-dim); font-size: 11px;
+  }
+  td { padding: 7px 8px; text-align: left; border-bottom: 1px solid rgba(38,46,63,0.25); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(79,126,255,0.04); }
+  .code-col { font-family: "SF Mono", "Monaco", "Menlo", monospace; font-size: 12px; font-weight: 500; }
+  .reason-col { color: var(--text-dim); font-size: 12px; max-width: 300px; }
+  .btn-sm { padding: 3px 10px; font-size: 11px; border-radius: 6px; cursor: pointer; border: none; transition: all .2s; }
+  .row-actions { display: flex; gap: 4px; }
+  .tag { display: inline-block; font-size: 9px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .tag-warn { background: rgba(239,68,68,0.12); color: var(--red); }
+  .tag-info { background: rgba(79,126,255,0.12); color: var(--accent); }
+  .tag-ok { background: rgba(34,197,94,0.12); color: var(--green); }
+  .tag-bl { background: rgba(239,68,68,0.12); color: var(--red); }
+  .tag-notbl { background: rgba(34,197,94,0.12); color: var(--green); }
+
+  /* 弹窗 */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px 32px; min-width: 420px; max-width: 600px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 18px; margin-bottom: 16px; }
+  .modal .field { margin-bottom: 14px; }
+  .modal .field label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 5px; }
+  .modal .field input, .modal .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; color: var(--text); font-size: 14px; outline: none;
+  }
+  .modal .field textarea { min-height: 70px; resize: vertical; }
+  .modal .field input:focus { border-color: var(--accent); }
+  .modal .btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+  .modal .btns .btn { font-size: 13px; padding: 10px 18px; }
+  .modal .error-msg { color: var(--red); font-size: 13px; margin-bottom: 12px; }
+
+  /* 查询结果 */
+  .risk-result {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; margin: 14px 0;
+  }
+  .risk-item { margin-bottom: 14px; }
+  .risk-item:last-child { margin-bottom: 0; }
+  .risk-item .label { font-size: 13px; color: var(--text-dim); margin-bottom: 3px; }
+  .risk-item .value { font-size: 15px; font-weight: 500; }
+  .risk-item .desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+  .risk-warn { color: var(--red); }
+  .risk-ok { color: var(--green); }
+  .risk-info { color: var(--accent); }
+  .bl-status { margin-bottom: 8px; }
+
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    display: inline-block; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 768px) {
+    .header { padding: 12px 14px 10px; }
+    .header h1 { font-size: 18px; }
+    .main { padding: 10px 12px; }
+    table { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <img src="logo.jpg" class="logo-avatar" alt="猪猪">
+      <div class="header-title">
+        <h1><span class="accent">猪猪基金</span><span class="light"> 黑名单股票池</span></h1>
+        <div style="font-size:11px;color:var(--text-dim);">⚠️ 2026年问题股 · 避雷参考</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <a href="/" class="btn btn-secondary" style="font-size:11px;padding:6px 10px;text-decoration:none;">📊 返回基金折溢价</a>
+      <button class="btn" onclick="showAddDialog()" style="font-size:11px;padding:6px 10px;">➕ 新增股票</button>
+      <button class="btn" onclick="showQueryDialog()" style="font-size:11px;padding:6px 10px;background:linear-gradient(135deg,#8b5cf6,#6366f1);">🔍 风险查询</button>
+      <button class="btn" onclick="loadBlacklist()" style="font-size:11px;padding:6px 10px;">🔄 刷新</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="stocks-count" id="countBar">
+    <span>📋 黑名单股票总数: <span class="num" id="totalCount">0</span> 只</span>
+    <span style="font-size:11px;color:var(--text-muted);">数据来源: 2026问题股.xlsx</span>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="🔍 输入股票代码/名称，回车查风险..." oninput="onFilter()" autocomplete="off">
+    <span class="search-hint">↩ 回车=查询风险 / 列表过滤</span>
+  </div>
+
+  <div class="table-wrap">
+    <div style="text-align:center;padding:40px 20px;color:var(--text-dim);" id="loadingState">
+      <div style="width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite;"></div>
+      <p>正在加载黑名单数据...</p>
+    </div>
+    <div class="table-scroll" id="tableWrap" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:50px;">#</th>
+            <th>股票代码</th>
+            <th>股票名称</th>
+            <th>风险原因</th>
+            <th style="width:180px;text-align:center;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+var stockList = [];
+
+async function loadBlacklist() {
+  document.getElementById('loadingState').style.display = '';
+  document.getElementById('tableWrap').style.display = 'none';
+
+  try {
+    var res = await fetch('/api/blacklist');
+    var json = await res.json();
+    if (json.ok && json.list) {
+      stockList = json.list;
+      renderTable();
+    }
+  } catch(e) {
+    alert('加载失败: ' + e.message);
+  }
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('tableWrap').style.display = '';
+}
+
+function renderTable() {
+  var search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  var filtered = stockList;
+  if (search) {
+    filtered = stockList.filter(function(s) {
+      return s.code.toLowerCase().indexOf(search) >= 0 || (s.name || '').toLowerCase().indexOf(search) >= 0;
+    });
+  }
+
+  document.getElementById('totalCount').textContent = stockList.length;
+
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  filtered.forEach(function(s, i) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '' +
+      '<td style="color:var(--text-muted);font-size:11px;">' + (i + 1) + '</td>' +
+      '<td class="code-col">' + s.code + '</td>' +
+      '<td><strong>' + (s.name || '-') + '</strong></td>' +
+      '<td class="reason-col">' + (s.reason || '<span style="color:var(--text-muted);">待补充</span>') + '</td>' +
+      '<td style="text-align:center;">' +
+        '<div class="row-actions" style="justify-content:center;">' +
+          '<button class="btn-sm btn-secondary" onclick="queryRisk(\'' + s.code + '\')" style="background:rgba(139,92,246,0.15);color:#a78bfa;border-color:rgba(139,92,246,0.3);">🔍 查风险</button>' +
+          '<button class="btn-sm btn-danger" onclick="removeStock(\'' + s.code + '\')">🗑 删除</button>' +
+        '</div>' +
+      '</td>';
+    tbody.appendChild(tr);
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-dim);">' +
+      (search ? '未找到匹配的股票' : '黑名单为空') + '</td></tr>';
+  }
+
+  var countBar = document.getElementById('countBar');
+  if (search && filtered.length !== stockList.length) {
+    countBar.querySelector('span:first-child').innerHTML = '📋 黑名单股票总数: <span class="num">' + stockList.length + '</span> 只 <span style="color:var(--text-dim);font-size:12px;">（搜索筛出 ' + filtered.length + ' 只）</span>';
+  } else {
+    countBar.querySelector('span:first-child').innerHTML = '📋 黑名单股票总数: <span class="num">' + stockList.length + '</span> 只';
+  }
+}
+
+function onFilter() {
+  renderTable();
+}
+
+// ====== 搜索回车 → 自动查询风险并显示在表格上方 ======
+document.addEventListener('DOMContentLoaded', function() {
+  var searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      var val = searchInput.value.trim();
+      if (val) {
+        e.preventDefault();
+        // 如果输入的是纯数字（股票代码），直接查风险
+        if (/^\\d{5,8}$/.test(val)) {
+          queryRiskInline(val);
+        } else {
+          // 模糊搜索，先在列表中匹配
+          var matched = stockList.filter(function(s) {
+            return s.code.indexOf(val) >= 0 || (s.name || '').toLowerCase().indexOf(val.toLowerCase()) >= 0;
+          });
+          if (matched.length === 1) {
+            queryRiskInline(matched[0].code);
+          } else if (matched.length === 0) {
+            // 没匹配到，尝试当成代码查
+            queryRiskInline(val);
+          }
+          // 多个匹配就不弹，列表已过滤
+        }
+      }
+    }
+  });
+});
+
+// ====== 内联风险查询（结果显示在表格上方区域） ======
+function queryRiskInline(code) {
+  var overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.id = 'inlineQueryDialog';
+
+  var dialogHtml = '' +
+    '<div class="modal" style="min-width:460px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
+        '<h3 style="margin:0;font-size:17px;">🔍 股票风险查询</h3>' +
+        '<button onclick="closeDialog(\'inlineQueryDialog\')" style="background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer;">&times;</button>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label>股票代码</label>' +
+        '<div style="display:flex;gap:10px;">' +
+          '<input type="text" id="inlineQueryCode" value="' + code + '" style="flex:1;font-size:14px;padding:9px 12px;" autocomplete="off" onkeydown="if(event.key==\'Enter\')doInlineQuery()">' +
+          '<button class="btn" onclick="doInlineQuery()" style="font-size:13px;padding:9px 18px;">查询</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="inlineQueryResult" style="display:none;"></div>' +
+      '<div id="inlineQueryLoading" style="display:none;text-align:center;padding:22px;">' +
+        '<div class="spinner" style="margin:0 auto 10px;width:24px;height:24px;"></div>' +
+        '<span style="color:var(--text-dim);font-size:14px;">正在查询，请稍候...</span>' +
+      '</div>' +
+    '</div>';
+
+  overlay.innerHTML = dialogHtml;
+  document.body.appendChild(overlay);
+  doInlineQuery();
+}
+
+async function doInlineQuery() {
+  var code = document.getElementById('inlineQueryCode').value.trim();
+  var resultEl = document.getElementById('inlineQueryResult');
+  var loadingEl = document.getElementById('inlineQueryLoading');
+
+  if (!code) { alert('请输入股票代码'); return; }
+
+  resultEl.style.display = 'none';
+  loadingEl.style.display = '';
+  resultEl.innerHTML = '';
+
+  try {
+    var res = await fetch('/api/stock-risk/' + code);
+    var json = await res.json();
+
+    loadingEl.style.display = 'none';
+    resultEl.style.display = '';
+
+    if (json.ok && json.data) {
+      var d = json.data;
+      resultEl.innerHTML = buildRiskResultHTML(d);
+    } else {
+      resultEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red);font-size:13px;">查询失败: ' + (json.error || '未知错误') + '</div>';
+    }
+  } catch(e) {
+    loadingEl.style.display = 'none';
+    resultEl.style.display = '';
+    resultEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red);font-size:13px;">网络错误: ' + e.message + '</div>';
+  }
+}
+
+// ====== 风险查询弹窗（独立入口） ======
+function showQueryDialog() {
+  var overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.id = 'queryDialog';
+
+  overlay.innerHTML = '' +
+    '<div class="modal" style="min-width:460px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
+        '<h3 style="margin:0;font-size:17px;">🔍 股票风险查询</h3>' +
+        '<button onclick="closeDialog(\'queryDialog\')" style="background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer;">&times;</button>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label>股票代码 *</label>' +
+        '<div style="display:flex;gap:10px;">' +
+          '<input type="text" id="queryCode" placeholder="例如 000002" style="flex:1;font-size:14px;padding:9px 12px;" autocomplete="off" onkeydown="if(event.key==\'Enter\')doQueryRisk()">' +
+          '<button class="btn" onclick="doQueryRisk()" style="font-size:13px;padding:9px 18px;">查询</button>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted);margin-top:5px;">可查询：审计意见 · 证监会立案 · ST风险 · 黑名单状态</div>' +
+      '</div>' +
+      '<div id="queryResult" style="display:none;"></div>' +
+      '<div id="queryLoading" style="display:none;text-align:center;padding:22px;">' +
+        '<div class="spinner" style="margin:0 auto 10px;width:24px;height:24px;"></div>' +
+        '<span style="color:var(--text-dim);font-size:14px;">正在查询，请稍候...</span>' +
+      '</div>' +
+      '<div class="btns">' +
+        '<button class="btn btn-secondary" onclick="closeDialog(\'queryDialog\')">关闭</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  document.getElementById('queryCode').focus();
+}
+
+function queryRisk(code) {
+  showQueryDialog();
+  setTimeout(function() {
+    document.getElementById('queryCode').value = code;
+    doQueryRisk();
+  }, 100);
+}
+
+async function doQueryRisk() {
+  var code = document.getElementById('queryCode').value.trim();
+  var resultEl = document.getElementById('queryResult');
+  var loadingEl = document.getElementById('queryLoading');
+
+  if (!code) { alert('请输入股票代码'); return; }
+
+  resultEl.style.display = 'none';
+  loadingEl.style.display = '';
+  resultEl.innerHTML = '';
+
+  try {
+    var res = await fetch('/api/stock-risk/' + code);
+    var json = await res.json();
+
+    loadingEl.style.display = 'none';
+    resultEl.style.display = '';
+
+    if (json.ok && json.data) {
+      var d = json.data;
+      resultEl.innerHTML = buildRiskResultHTML(d);
+    } else {
+      resultEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red);font-size:13px;">查询失败: ' + (json.error || '未知错误') + '</div>';
+    }
+  } catch(e) {
+    loadingEl.style.display = 'none';
+    resultEl.style.display = '';
+    resultEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red);font-size:13px;">网络错误: ' + e.message + '</div>';
+  }
+}
+
+function buildRiskResultHTML(d) {
+  function riskClass(val) {
+    if (!val) return '';
+    if (val.indexOf('非标准') >= 0 || val.indexOf('立案') >= 0 || val.indexOf('ST') >= 0 || val.indexOf('风险') >= 0 || val.indexOf('亏损') >= 0 || val.indexOf('净资产为负') >= 0 || val.indexOf('营收不足') >= 0) return 'risk-warn';
+    if (val.indexOf('标准') >= 0 || val.indexOf('未发现') >= 0 || val.indexOf('暂未') >= 0) return 'risk-ok';
+    return 'risk-info';
+  }
+
+  // 黑名单状态标签
+  var blHtml = '';
+  if (d.inBlacklist) {
+    blHtml = '<span class="tag tag-bl">🚫 已在黑名单' + (d.blacklistReason ? ': ' + d.blacklistReason : '') + '</span>';
+  } else {
+    blHtml = '<span class="tag tag-notbl">✅ 不在黑名单中</span>';
+  }
+
+  return '' +
+    '<div class="risk-result">' +
+      '<div style="font-size:16px;font-weight:600;margin-bottom:6px;">' + (d.name || d.code) + ' <span style="font-size:12px;color:var(--text-dim);font-weight:400;">' + d.code + '</span></div>' +
+      '<div class="bl-status">' + blHtml + '</div>' +
+      '<div class="risk-item">' +
+        '<div class="label">📄 财务报告审计意见</div>' +
+        '<div class="value ' + riskClass(d.auditOpinion) + '">' + (d.auditOpinion || '未知') + '</div>' +
+        (d.auditOpinionDesc ? '<div class="desc">' + d.auditOpinionDesc + '</div>' : '') +
+      '</div>' +
+      '<div class="risk-item">' +
+        '<div class="label">⚖️ 证监会立案调查</div>' +
+        '<div class="value ' + riskClass(d.csrcCase) + '">' + (d.csrcCase || '未知') + '</div>' +
+        (d.csrcCaseDesc ? '<div class="desc">' + d.csrcCaseDesc + '</div>' : '') +
+      '</div>' +
+      '<div class="risk-item">' +
+        '<div class="label">⚠️ ST风险（财务指标）</div>' +
+        '<div class="value ' + riskClass(d.stRisk) + '">' + (d.stRisk || '未知') + '</div>' +
+        (d.stRiskDesc ? '<div class="desc">' + d.stRiskDesc + '</div>' : '') +
+      '</div>' +
+      '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);text-align:center;">' +
+        '数据源：东方财富 · 巨潮资讯 · 腾讯行情 · 仅供参考' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:10px;display:flex;gap:10px;">' +
+      '<button class="btn-sm btn-secondary" onclick="addSearchedToBlacklist(\'' + d.code + '\',\'' + (d.name || '') + '\')" style="flex:1;border:1px solid var(--border);font-size:13px;padding:8px 14px;">➕ 加入黑名单</button>' +
+    '</div>';
+}
+
+function addSearchedToBlacklist(code, name) {
+  // Find the dialog that contains this result and close it
+  var dialogs = ['inlineQueryDialog', 'queryDialog'];
+  for (var i = 0; i < dialogs.length; i++) {
+    var el = document.getElementById(dialogs[i]);
+    if (el) { closeDialog(dialogs[i]); break; }
+  }
+  showAddDialog();
+  document.getElementById('addCode').value = code;
+  document.getElementById('addName').value = name;
+}
+
+// ====== 新增股票弹窗 ======
+function showAddDialog() {
+  var overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.id = 'addDialog';
+  overlay.innerHTML = '' +
+    '<div class="modal">' +
+      '<h3>➕ 新增黑名单股票</h3>' +
+      '<div class="error-msg" id="addError"></div>' +
+      '<div class="field">' +
+        '<label>股票代码 *</label>' +
+        '<input type="text" id="addCode" placeholder="例如 600519" autocomplete="off">' +
+      '</div>' +
+      '<div class="field">' +
+        '<label>股票名称</label>' +
+        '<input type="text" id="addName" placeholder="例如 贵州茅台" autocomplete="off">' +
+      '</div>' +
+      '<div class="field">' +
+        '<label>风险原因</label>' +
+        '<textarea id="addReason" placeholder="例如：涉嫌违规立案、净资产为负、营收不足..."></textarea>' +
+      '</div>' +
+      '<div class="btns">' +
+        '<button class="btn btn-secondary" onclick="closeDialog(\'addDialog\')">取消</button>' +
+        '<button class="btn" onclick="addStock()">确认添加</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  document.getElementById('addCode').focus();
+}
+
+async function addStock() {
+  var code = document.getElementById('addCode').value.trim();
+  var name = document.getElementById('addName').value.trim();
+  var reason = document.getElementById('addReason').value.trim();
+  var errEl = document.getElementById('addError');
+
+  if (!code) {
+    errEl.textContent = '请输入股票代码';
+    return;
+  }
+
+  try {
+    var res = await fetch('/api/blacklist/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code, name: name, reason: reason })
+    });
+    var json = await res.json();
+    if (json.ok) {
+      closeDialog('addDialog');
+      loadBlacklist();
+    } else {
+      errEl.textContent = json.error || '添加失败';
+    }
+  } catch(e) {
+    errEl.textContent = '网络错误: ' + e.message;
+  }
+}
+
+// ====== 删除股票 ======
+async function removeStock(code) {
+  if (!confirm('确定要从黑名单删除 ' + code + ' 吗？')) return;
+
+  try {
+    var res = await fetch('/api/blacklist/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    });
+    var json = await res.json();
+    if (json.ok) {
+      loadBlacklist();
+    } else {
+      alert(json.error || '删除失败');
+    }
+  } catch(e) {
+    alert('网络错误: ' + e.message);
+  }
+}
+
+function closeDialog(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ====== 加载 ======
+loadBlacklist();
+</script>
+</body>
+</html>

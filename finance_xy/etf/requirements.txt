@@ -1,0 +1,2 @@
+# gen_lof.py 仅使用 Python 3 标准库（json、re、subprocess），无需第三方包。
+# 保留此文件以便统一安装流程；若后续添加依赖，请写在下方。
